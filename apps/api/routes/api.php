@@ -11,6 +11,7 @@ use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MessageDeletionController;
 use App\Http\Controllers\MessageReactionController;
 use App\Http\Controllers\ReferenceController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserPublicController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,10 +40,10 @@ Route::get('/users/{user}', [UserPublicController::class, 'show'])->whereNumber(
 // Listing browse (API_CONTRACT §4 - "Duyệt tin đăng").
 Route::get('/listings', [ListingController::class, 'index']);
 Route::get('/listings/{listing}', [ListingController::class, 'show'])->whereNumber('listing');
-Route::get('/listings/{listing}/reviews', [ListingController::class, 'reviews'])->whereNumber('listing');
+Route::get('/listings/{listing}/reviews', [ReviewController::class, 'index'])->whereNumber('listing');
 
 // Reviews (API_CONTRACT §4 - "Đánh giá", Student only).
-Route::post('/listings/{listing}/reviews', [ListingController::class, 'storeReview'])
+Route::post('/listings/{listing}/reviews', [ReviewController::class, 'store'])
     ->middleware(['auth:sanctum', 'role:student'])
     ->whereNumber('listing');
 
