@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Listing;
 
 use App\Models\Listing;
 use Illuminate\Validation\Rule;

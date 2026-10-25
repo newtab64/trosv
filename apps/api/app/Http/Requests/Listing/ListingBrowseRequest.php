@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Listing;
 
 use App\Http\Controllers\ListingController;
 use App\Models\Listing;

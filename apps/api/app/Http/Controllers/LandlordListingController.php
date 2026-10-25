@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ListingImageUploadRequest;
-use App\Http\Requests\ListingStoreRequest;
-use App\Http\Requests\ListingUpdateRequest;
+use App\Http\Requests\Listing\ListingImageUploadRequest;
+use App\Http\Requests\Listing\ListingStoreRequest;
+use App\Http\Requests\Listing\ListingUpdateRequest;
 use App\Http\Resources\ListingDetailResource;
 use App\Http\Resources\ListingSummaryResource;
 use App\Models\Listing;

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Events\MessageSeen;
 use App\Events\MessageSent;
-use App\Http\Requests\ConversationStoreRequest;
-use App\Http\Requests\MessageListRequest;
-use App\Http\Requests\MessageSendRequest;
+use App\Http\Requests\Messaging\ConversationStoreRequest;
+use App\Http\Requests\Messaging\MessageListRequest;
+use App\Http\Requests\Messaging\MessageSendRequest;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
