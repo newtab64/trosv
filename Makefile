@@ -26,6 +26,7 @@ test-api: ## Chay kiem thu Laravel API trong container backend-test (su dung DB 
 			echo 'Khoi tao database rental_test...'; \
 			createdb -U rental rental_test; \
 		fi"
+	$(COMPOSE) --profile test build backend-test
 	@TARGET_DB=$$($(COMPOSE) --profile test run --rm -T --no-deps backend-test php -r "require 'vendor/autoload.php'; \$$app = require 'bootstrap/app.php'; \$$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo config('database.connections.pgsql.database');" | tail -n 1); \
 	echo "Database: $$TARGET_DB"; \
 	if [ "$$TARGET_DB" != "rental_test" ]; then \
