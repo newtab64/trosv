@@ -2,7 +2,7 @@ COMPOSE ?= docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down logs test-api lint-api lint-web build-web test-e2e smoke backup check
+.PHONY: help up down logs test-api test-ai lint-api lint-web build-web test-e2e smoke backup check
 
 help: ## Hien thi danh sach cac target kha dung
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -34,6 +34,10 @@ test-api: ## Chay kiem thu Laravel API trong container backend-test (su dung DB 
 		exit 1; \
 	fi
 	$(COMPOSE) --profile test run --rm -T backend-test php artisan test
+
+test-ai: ## Chay kiem thu contract AI service bang pytest trong container ai-service-test
+	$(COMPOSE) --profile test build ai-service-test
+	$(COMPOSE) --profile test run --rm -T ai-service-test pytest
 
 lint-api: ## Kiem tra code style backend voi Pint
 	cd apps/api && ./vendor/bin/pint --test

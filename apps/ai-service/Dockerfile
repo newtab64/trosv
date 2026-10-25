@@ -4,10 +4,15 @@
 # ============================================================
 FROM python:3.12-slim-trixie
 
+ARG INSTALL_DEV="false"
+
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt requirements-dev.txt* ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ "$INSTALL_DEV" = "true" ] && [ -f requirements-dev.txt ]; then \
+        pip install --no-cache-dir -r requirements-dev.txt; \
+    fi
 
 COPY *.py knowledge.md* ./
 
@@ -15,3 +20,4 @@ EXPOSE 8001
 
 # Khoi lenh that do compose gan (uvicorn ...); CMD giu cho chay doc lap.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+

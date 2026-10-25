@@ -277,6 +277,19 @@ services:
       start_period: 15s
     profiles: [ai]
 
+  ai-service-test:
+    profiles: [test]
+    build:
+      context: ./apps/ai-service
+      args:
+        INSTALL_DEV: "true"
+    logging: *default-logging
+    environment:
+      FAKE_MODE: "true"
+      PYTHONPATH: /app
+    volumes:
+      - ./apps/ai-service/tests:/app/tests:ro
+
 volumes:
   pgdata:
   trosv-storage:
