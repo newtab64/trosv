@@ -244,6 +244,81 @@ class AiProxyTest extends TestCase
             ->assertJsonPath('message', 'Chưa đủ tin tương tự để so sánh giá.');
     }
 
+    public function test_price_advice_stats_with_differently_priced_comparables_for_odd_and_even_counts(): void
+    {
+        Http::fake([
+            '*/price-advice' => Http::response([
+                'verdict' => 'fair',
+                'fair_min' => 1_500_000,
+                'fair_max' => 3_000_000,
+                'tips' => [],
+                'message' => 'Giá hợp lý.',
+            ]),
+        ]);
+
+        // (a) Odd count: 5 comparables at different prices, inserted out of order
+        $wardOdd = Ward::factory()->create();
+        $listingOdd = Listing::factory()->create([
+            'user_id' => $this->landlord->id,
+            'ward_id' => $wardOdd->id,
+            'type' => 'room',
+            'price' => 2_500_000,
+            'area_m2' => 20,
+            'status' => 'available',
+        ]);
+        $oddPrices = [2_600_000, 1_500_000, 3_000_000, 1_800_000, 2_000_000];
+        foreach ($oddPrices as $price) {
+            Listing::factory()->create([
+                'user_id' => $this->landlord->id,
+                'ward_id' => $wardOdd->id,
+                'type' => 'room',
+                'price' => $price,
+                'area_m2' => 22,
+                'status' => 'available',
+            ]);
+        }
+
+        $resOdd = $this->actingAs($this->student, 'sanctum')
+            ->postJson('/api/ai/price-advice', ['listing_id' => $listingOdd->id])
+            ->assertOk();
+
+        $this->assertSame(5, $resOdd->json('data.stats.count'));
+        $this->assertSame(1_500_000, $resOdd->json('data.stats.min'));
+        $this->assertSame(2_000_000, $resOdd->json('data.stats.median'));
+        $this->assertSame(3_000_000, $resOdd->json('data.stats.max'));
+
+        // (b) Even count: 4 comparables at different prices, inserted out of order
+        $wardEven = Ward::factory()->create();
+        $listingEven = Listing::factory()->create([
+            'user_id' => $this->landlord->id,
+            'ward_id' => $wardEven->id,
+            'type' => 'room',
+            'price' => 2_500_000,
+            'area_m2' => 20,
+            'status' => 'available',
+        ]);
+        $evenPrices = [2_500_000, 1_500_000, 2_100_000, 1_900_000];
+        foreach ($evenPrices as $price) {
+            Listing::factory()->create([
+                'user_id' => $this->landlord->id,
+                'ward_id' => $wardEven->id,
+                'type' => 'room',
+                'price' => $price,
+                'area_m2' => 22,
+                'status' => 'available',
+            ]);
+        }
+
+        $resEven = $this->actingAs($this->student, 'sanctum')
+            ->postJson('/api/ai/price-advice', ['listing_id' => $listingEven->id])
+            ->assertOk();
+
+        $this->assertSame(4, $resEven->json('data.stats.count'));
+        $this->assertSame(1_500_000, $resEven->json('data.stats.min'));
+        $this->assertSame(2_000_000, $resEven->json('data.stats.median'));
+        $this->assertSame(2_500_000, $resEven->json('data.stats.max'));
+    }
+
     // ------------------------------------------------------------------
     // POST /ai/area-suggestions
     // ------------------------------------------------------------------
