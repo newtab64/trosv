@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Geo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -101,7 +102,7 @@ class Listing extends Model
      * order: point lat, point lng, point lat).
      */
     public const DISTANCE_SQL =
-        '6371 * ACOS(LEAST(1, COS(RADIANS(CAST(? AS float8))) * COS(RADIANS(latitude)) * '
+        Geo::EARTH_RADIUS_KM.' * ACOS(LEAST(1, COS(RADIANS(CAST(? AS float8))) * COS(RADIANS(latitude)) * '
         .'COS(RADIANS(longitude) - RADIANS(CAST(? AS float8))) + '
         .'SIN(RADIANS(CAST(? AS float8))) * SIN(RADIANS(latitude))))';
 
