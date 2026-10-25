@@ -8,6 +8,7 @@ use App\Models\Conversation;
 use App\Models\Listing;
 use App\Models\Message;
 use App\Models\User;
+use App\Support\StoragePath;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -90,7 +91,7 @@ class ConversationService
             $rawName = $file->getClientOriginalName();
             // Sanitize against path traversal and HTTP header splitting (CRLF) in Content-Disposition
             $attachmentName = preg_replace('/[\r\n\x00-\x1F\x7F]/', '', basename($rawName)) ?: 'attachment';
-            $attachmentPath = $file->store("attachments/{$conversation->id}");
+            $attachmentPath = $file->store(StoragePath::attachment($conversation->id));
         }
 
         try {
