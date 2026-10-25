@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\MessageSeen;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -118,5 +119,19 @@ class MessageSeenTest extends TestCase
     {
         $this->postJson("/api/conversations/{$this->conversation->id}/read")
             ->assertUnauthorized();
+    }
+
+    public function test_mark_read_dispatches_message_seen_broadcast_event(): void
+    {
+        $this->messageFrom($this->student);
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/conversations/{$this->conversation->id}/read")
+            ->assertOk();
+
+        Event::assertDispatched(MessageSeen::class, function ($event) {
+            return $event->conversation->id === $this->conversation->id
+                && $event->reader->id === $this->landlord->id;
+        });
     }
 }

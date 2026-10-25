@@ -22,13 +22,9 @@ class MessageDeletionController extends Controller
 
     public function destroy(Request $request, Message $message): JsonResponse
     {
-        $user = $request->user();
+        $this->authorizeParticipant($request, $message);
 
-        // Outsiders nhận 404 - giống các endpoint hội thoại khác.
-        // (participate rides the ConversationPolicy mapping on Message.)
-        if (! $user->can('participate', $message)) {
-            abort(404);
-        }
+        $user = $request->user();
 
         $scope = $request->string('scope', 'self')->toString();
 

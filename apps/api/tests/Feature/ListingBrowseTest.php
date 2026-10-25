@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Amenity;
+use App\Models\City;
 use App\Models\Listing;
 use App\Models\Review;
 use App\Models\School;
@@ -69,6 +70,46 @@ class ListingBrowseTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3, 'data')
             ->assertJsonStructure(['data' => [['id', 'name']]]);
+    }
+
+    public function test_cities_endpoint_returns_sorted_list_with_correct_structure(): void
+    {
+        City::query()->delete();
+        City::factory()->create(['name' => 'Can Tho']);
+        City::factory()->create(['name' => 'An Giang']);
+        City::factory()->create(['name' => 'Binh Duong']);
+
+        $response = $this->getJson('/api/cities')
+            ->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'type', 'latitude', 'longitude']]]);
+
+        $names = collect($response->json('data'))->pluck('name')->all();
+        $this->assertSame(['An Giang', 'Binh Duong', 'Can Tho'], $names);
+    }
+
+    public function test_wards_and_schools_filter_by_city_id(): void
+    {
+        $city1 = City::factory()->create();
+        $city2 = City::factory()->create();
+
+        $ward1 = Ward::factory()->create(['city_id' => $city1->id]);
+        $ward2 = Ward::factory()->create(['city_id' => $city2->id]);
+
+        $school1 = School::factory()->create(['city_id' => $city1->id, 'ward_id' => $ward1->id]);
+        $school2 = School::factory()->create(['city_id' => $city2->id, 'ward_id' => $ward2->id]);
+
+        $this->getJson("/api/wards?city_id={$city1->id}")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $ward1->id)
+            ->assertJsonPath('data.0.city.id', $city1->id)
+            ->assertJsonMissing(['id' => $ward2->id]);
+
+        $this->getJson("/api/schools?city_id={$city2->id}")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $school2->id)
+            ->assertJsonPath('data.0.city.id', $city2->id)
+            ->assertJsonPath('data.0.ward.id', $ward2->id)
+            ->assertJsonMissing(['id' => $school1->id]);
     }
 
     // ------------------------------------------------------------------

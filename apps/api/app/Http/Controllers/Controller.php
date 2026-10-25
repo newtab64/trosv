@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesResources;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 abstract class Controller
 {
     use AuthorizesRequests;
+    use AuthorizesResources;
 
     /** Maximum page size for every paginated endpoint (step 4 convention). */
     protected const PER_PAGE_MAX = 50;

@@ -20,12 +20,9 @@ class MessageReactionController extends Controller
 {
     public function update(ReactionUpdateRequest $request, Message $message): JsonResponse
     {
-        $user = $request->user();
+        $this->authorizeParticipant($request, $message);
 
-        // Outsiders nhận 404 (không phải 403) - không lộ sự tồn tại.
-        if (! $user->can('participate', $message)) {
-            abort(404);
-        }
+        $user = $request->user();
 
         $validated = $request->validated();
 
@@ -52,12 +49,9 @@ class MessageReactionController extends Controller
 
     public function destroy(Request $request, Message $message): JsonResponse
     {
-        $user = $request->user();
+        $this->authorizeParticipant($request, $message);
 
-        // Outsiders nhận 404 (không phải 403) - không lộ sự tồn tại.
-        if (! $user->can('participate', $message)) {
-            abort(404);
-        }
+        $user = $request->user();
 
         $fresh = $message->fresh();
         $reactions = $fresh->reactions ?? [];

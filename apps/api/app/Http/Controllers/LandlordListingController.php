@@ -9,12 +9,10 @@ use App\Http\Resources\ListingDetailResource;
 use App\Http\Resources\ListingSummaryResource;
 use App\Models\Listing;
 use App\Models\ListingImage;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\Services\ListingImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * Landlord listing management (API_CONTRACT §4 - "Chủ nhà: quản lý tin đăng").
@@ -22,6 +20,10 @@ use Illuminate\Support\Str;
  */
 class LandlordListingController extends Controller
 {
+    public function __construct(
+        protected ListingImageService $listingImageService
+    ) {}
+
     /**
      * GET /api/my/listings - all statuses, optional status filter, paginated.
      */
@@ -118,52 +120,13 @@ class LandlordListingController extends Controller
     {
         $this->authorizeOwnership($request, $listing);
 
-        $existingCount = $listing->images()->count();
-        $newFiles = $request->file('images', []);
-
-        if ($existingCount + count($newFiles) > 5) {
-            return response()->json([
-                'message' => 'Tin đăng chỉ có tối đa 5 ảnh.',
-                'errors' => ['images' => ['Tin đăng chỉ có tối đa 5 ảnh (hiện có '.$existingCount.').']],
-            ], 422);
-        }
-
-        $createdPaths = [];
-        try {
-            DB::transaction(function () use ($listing, $newFiles, &$createdPaths) {
-                foreach ($newFiles as $file) {
-                    // The stored extension is derived from the file's VALIDATED content
-                    // type (sniffed from the bytes), never from the client-supplied
-                    // name: getClientOriginalExtension() is attacker-controlled. A file
-                    // named "shell.php" whose content sniffs as image/jpeg must not
-                    // keep a server-side .php name - under `php artisan serve` the
-                    // Laravel router serves existing files under public/ raw, so a
-                    // stored .php would EXECUTE (unauthenticated RCE).
-                    $extension = match ($file->getMimeType()) {
-                        'image/jpeg' => 'jpg',
-                        'image/png' => 'png',
-                        'image/webp' => 'webp',
-                        // Unreachable behind the mimes: rule; kept identical to the
-                        // old fallback (content-sniffed, never client-supplied).
-                        default => $file->extension(),
-                    };
-                    $path = 'listings/'.Str::uuid()->toString().'.'.$extension;
-                    Storage::disk('public')->put($path, $file->getContent());
-                    $createdPaths[] = $path;
-                    $listing->images()->create(['path' => $path]);
-                }
-            });
-        } catch (\Throwable $e) {
-            foreach ($createdPaths as $path) {
-                Storage::disk('public')->delete($path);
-            }
-            throw $e;
-        }
-
-        $listing->refresh()->load('images');
+        $images = $this->listingImageService->uploadImages(
+            $listing,
+            $request->file('images', [])
+        );
 
         return response()->json([
-            'data' => $listing->images->sortBy('id')->values()->map(fn (ListingImage $image) => [
+            'data' => $images->map(fn (ListingImage $image) => [
                 'id' => $image->id,
                 'url' => Storage::disk('public')->url($image->path),
             ])->all(),
@@ -177,23 +140,8 @@ class LandlordListingController extends Controller
     {
         $this->authorizeOwnership($request, $listing);
 
-        // The image must belong to this listing (else treat as not found).
-        if ($image->listing_id !== $listing->id) {
-            abort(404);
-        }
-
-        Storage::disk('public')->delete($image->path ?? '');
-        $image->delete();
+        $this->listingImageService->deleteImage($listing, $image);
 
         return response()->json(['data' => null]);
-    }
-
-    /** 403 with the standard message unless the current user owns the listing. */
-    private function authorizeOwnership(Request $request, Listing $listing): void
-    {
-        if (! $request->user()->can('manage', $listing)) {
-            // Rendered as { message: "Bạn không có quyền..." } by the handler.
-            throw new AuthorizationException;
-        }
     }
 }

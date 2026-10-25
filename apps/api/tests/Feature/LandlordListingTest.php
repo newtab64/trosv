@@ -241,6 +241,28 @@ class LandlordListingTest extends TestCase
         $this->assertStringEndsWith('/storage/'.$storedPath, $response->json('data.0.url'));
     }
 
+    public function test_stored_file_paths_for_new_uploads_match_legacy_format(): void
+    {
+        Storage::fake('public');
+        $listing = $this->makeOwnedListing();
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/listings/{$listing->id}/images", [
+                'images' => [
+                    UploadedFile::fake()->create('photo.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('graphic.png', 100, 'image/png'),
+                    UploadedFile::fake()->create('modern.webp', 100, 'image/webp'),
+                ],
+            ])
+            ->assertOk();
+
+        $images = $listing->images()->orderBy('id')->get();
+        $this->assertCount(3, $images);
+        $this->assertMatchesRegularExpression('#^listings/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$#', $images[0]->path);
+        $this->assertMatchesRegularExpression('#^listings/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$#', $images[1]->path);
+        $this->assertMatchesRegularExpression('#^listings/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$#', $images[2]->path);
+    }
+
     public function test_upload_rejects_more_than_five_total_images(): void
     {
         $listing = $this->makeOwnedListing();
@@ -389,5 +411,39 @@ class LandlordListingTest extends TestCase
             ->deleteJson("/api/listings/{$listing->id}/images/abc")
             ->assertStatus(404)
             ->assertExactJson(['message' => 'Không tìm thấy dữ liệu.']);
+    }
+
+    public function test_listing_cover_image_updates_when_smallest_id_image_is_deleted(): void
+    {
+        Storage::fake('public');
+        $listing = $this->makeOwnedListing();
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/listings/{$listing->id}/images", [
+                'images' => [
+                    UploadedFile::fake()->create('first.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('second.jpg', 100, 'image/jpeg'),
+                ],
+            ])
+            ->assertOk();
+
+        $images = $listing->images()->orderBy('id')->get();
+        $this->assertCount(2, $images);
+        $img1 = $images[0];
+        $img2 = $images[1];
+
+        $detail = $this->actingAs($this->landlord, 'sanctum')
+            ->getJson("/api/listings/{$listing->id}")
+            ->assertOk();
+        $this->assertStringContainsString($img1->path, $detail->json('data.cover_image'));
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->deleteJson("/api/listings/{$listing->id}/images/{$img1->id}")
+            ->assertOk();
+
+        $detailAfter = $this->actingAs($this->landlord, 'sanctum')
+            ->getJson("/api/listings/{$listing->id}")
+            ->assertOk();
+        $this->assertStringContainsString($img2->path, $detailAfter->json('data.cover_image'));
     }
 }

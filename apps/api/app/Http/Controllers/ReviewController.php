@@ -64,14 +64,4 @@ class ReviewController extends Controller
 
         return response()->json(['data' => (new ReviewResource($review->load('student')))->resolve($request)], 201);
     }
-
-    public function reviews(Request $request, Listing $listing): JsonResponse
-    {
-        return $this->index($request, $listing);
-    }
-
-    public function storeReview(ReviewStoreRequest $request, Listing $listing): JsonResponse
-    {
-        return $this->store($request, $listing);
-    }
 }

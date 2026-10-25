@@ -11,6 +11,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -157,6 +158,21 @@ class ConversationTest extends TestCase
 
         $this->assertSame($firstId, $secondId);
         $this->assertDatabaseCount('conversations', 1);
+    }
+
+    public function test_conversation_creation_deduplicates_automatic_messages_within_fifteen_minutes(): void
+    {
+        $this->actingAs($this->student, 'sanctum')
+            ->postJson('/api/conversations', ['listing_id' => $this->listing->id])
+            ->assertStatus(201);
+
+        $this->assertDatabaseCount('messages', 2);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->postJson('/api/conversations', ['listing_id' => $this->listing->id])
+            ->assertStatus(200);
+
+        $this->assertDatabaseCount('messages', 2);
     }
 
     public function test_student_cannot_start_conversation_on_own_listing(): void
@@ -354,6 +370,24 @@ class ConversationTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    public function test_send_message_dispatches_message_sent_broadcast_event(): void
+    {
+        Event::fake([MessageSent::class]);
+
+        $conv = $this->createConversation();
+
+        $this->actingAs($this->student, 'sanctum')
+            ->postJson("/api/conversations/{$conv->id}/messages", [
+                'body' => 'Xin chào Reverb!',
+            ])
+            ->assertStatus(201);
+
+        Event::assertDispatched(MessageSent::class, function ($event) use ($conv) {
+            return $event->message->conversation_id === $conv->id
+                && $event->message->body === 'Xin chào Reverb!';
+        });
     }
 
     public function test_message_sent_event_matches_message_resource_shape(): void
