@@ -10,7 +10,6 @@ use App\Http\Resources\ListingSummaryResource;
 use App\Models\Listing;
 use App\Models\ListingImage;
 use App\Services\ListingImageService;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -144,14 +143,5 @@ class LandlordListingController extends Controller
         $this->listingImageService->deleteImage($listing, $image);
 
         return response()->json(['data' => null]);
-    }
-
-    /** 403 with the standard message unless the current user owns the listing. */
-    private function authorizeOwnership(Request $request, Listing $listing): void
-    {
-        if (! $request->user()->can('manage', $listing)) {
-            // Rendered as { message: "Bạn không có quyền..." } by the handler.
-            throw new AuthorizationException;
-        }
     }
 }
