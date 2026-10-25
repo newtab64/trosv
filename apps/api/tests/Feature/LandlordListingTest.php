@@ -390,4 +390,38 @@ class LandlordListingTest extends TestCase
             ->assertStatus(404)
             ->assertExactJson(['message' => 'Không tìm thấy dữ liệu.']);
     }
+
+    public function test_listing_cover_image_updates_when_smallest_id_image_is_deleted(): void
+    {
+        Storage::fake('public');
+        $listing = $this->makeOwnedListing();
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/listings/{$listing->id}/images", [
+                'images' => [
+                    UploadedFile::fake()->create('first.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('second.jpg', 100, 'image/jpeg'),
+                ],
+            ])
+            ->assertOk();
+
+        $images = $listing->images()->orderBy('id')->get();
+        $this->assertCount(2, $images);
+        $img1 = $images[0];
+        $img2 = $images[1];
+
+        $detail = $this->actingAs($this->landlord, 'sanctum')
+            ->getJson("/api/listings/{$listing->id}")
+            ->assertOk();
+        $this->assertStringContainsString($img1->path, $detail->json('data.cover_image'));
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->deleteJson("/api/listings/{$listing->id}/images/{$img1->id}")
+            ->assertOk();
+
+        $detailAfter = $this->actingAs($this->landlord, 'sanctum')
+            ->getJson("/api/listings/{$listing->id}")
+            ->assertOk();
+        $this->assertStringContainsString($img2->path, $detailAfter->json('data.cover_image'));
+    }
 }
