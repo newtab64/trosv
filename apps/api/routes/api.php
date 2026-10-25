@@ -33,7 +33,6 @@ Route::get('/wards', [ReferenceController::class, 'wards']);
 Route::get('/schools', [ReferenceController::class, 'schools']);
 Route::get('/amenities', [ReferenceController::class, 'amenities']);
 
-// Listing browse (API_CONTRACT §4 - "Duyệt tin đăng").
 // Public student profiles (API_CONTRACT §4) - PII-safe, landlords 404.
 Route::get('/users/{user}', [UserPublicController::class, 'show'])->whereNumber('user');
 
@@ -48,29 +47,29 @@ Route::post('/listings/{listing}/reviews', [ReviewController::class, 'store'])
     ->whereNumber('listing');
 
 // Landlord listing management (API_CONTRACT §4 - "Chủ nhà: quản lý tin đăng").
-Route::get('/my/listings', [LandlordListingController::class, 'index'])->middleware(['auth:sanctum', 'role:landlord']);
-Route::post('/listings', [LandlordListingController::class, 'store'])->middleware(['auth:sanctum', 'role:landlord']);
-Route::put('/listings/{listing}', [LandlordListingController::class, 'update'])
-    ->middleware(['auth:sanctum', 'role:landlord'])->whereNumber('listing');
-Route::delete('/listings/{listing}', [LandlordListingController::class, 'destroy'])
-    ->middleware(['auth:sanctum', 'role:landlord'])->whereNumber('listing');
-Route::post('/listings/{listing}/images', [LandlordListingController::class, 'uploadImages'])
-    ->middleware(['auth:sanctum', 'role:landlord'])->whereNumber('listing');
-Route::delete('/listings/{listing}/images/{image}', [LandlordListingController::class, 'deleteImage'])
-    ->middleware(['auth:sanctum', 'role:landlord'])->whereNumber(['listing', 'image']);
+Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
+    Route::get('/my/listings', [LandlordListingController::class, 'index']);
+    Route::post('/listings', [LandlordListingController::class, 'store']);
+    Route::put('/listings/{listing}', [LandlordListingController::class, 'update'])->whereNumber('listing');
+    Route::delete('/listings/{listing}', [LandlordListingController::class, 'destroy'])->whereNumber('listing');
+    Route::post('/listings/{listing}/images', [LandlordListingController::class, 'uploadImages'])->whereNumber('listing');
+    Route::delete('/listings/{listing}/images/{image}', [LandlordListingController::class, 'deleteImage'])
+        ->whereNumber(['listing', 'image']);
+});
 
 // Favorites (API_CONTRACT §4 - "Yêu thích", Student only).
-Route::get('/favorites', [FavoriteController::class, 'index'])->middleware(['auth:sanctum', 'role:student']);
-Route::put('/favorites/{listing_id}', [FavoriteController::class, 'attach'])
-    ->middleware(['auth:sanctum', 'role:student'])->whereNumber('listing_id');
-Route::delete('/favorites/{listing_id}', [FavoriteController::class, 'detach'])
-    ->middleware(['auth:sanctum', 'role:student'])->whereNumber('listing_id');
+Route::middleware(['auth:sanctum', 'role:student'])->group(function () {
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::put('/favorites/{listing_id}', [FavoriteController::class, 'attach'])->whereNumber('listing_id');
+    Route::delete('/favorites/{listing_id}', [FavoriteController::class, 'detach'])->whereNumber('listing_id');
+});
 
 // Messaging (API_CONTRACT §4 - "Nhắn tin"). Outsiders get 404.
-Route::post('/conversations', [ConversationController::class, 'store'])->middleware(['auth:sanctum', 'role:student']);
-// Hội thoại trực tiếp giữa 2 sinh viên (không qua tin đăng) từ hồ sơ công khai.
-Route::post('/users/{user}/message', [ConversationController::class, 'storeDirect'])
-    ->middleware(['auth:sanctum', 'role:student'])->whereNumber('user');
+Route::middleware(['auth:sanctum', 'role:student'])->group(function () {
+    Route::post('/conversations', [ConversationController::class, 'store']);
+    // Hội thoại trực tiếp giữa 2 sinh viên (không qua tin đăng) từ hồ sơ công khai.
+    Route::post('/users/{user}/message', [ConversationController::class, 'storeDirect'])->whereNumber('user');
+});
 Route::get('/conversations', [ConversationController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages'])
     ->middleware('auth:sanctum')->whereNumber('conversation');
