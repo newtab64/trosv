@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Listing;
 
 /**
  * POST /api/listings (landlord). Rules dùng chung từ ListingFormRequest,

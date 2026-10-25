@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ReviewStoreRequest;
+use App\Http\Requests\Listing\ReviewStoreRequest;
 use App\Http\Resources\ReviewResource;
 use App\Models\Listing;
 use App\Models\Review;

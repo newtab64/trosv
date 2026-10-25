@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AiChatRequest;
-use App\Http\Requests\AiDescriptionRequest;
-use App\Http\Requests\AreaSuggestionsRequest;
-use App\Http\Requests\PriceAdviceRequest;
-use App\Http\Requests\RoommatesRequest;
+use App\Http\Requests\Ai\AiChatRequest;
+use App\Http\Requests\Ai\AiDescriptionRequest;
+use App\Http\Requests\Ai\AreaSuggestionsRequest;
+use App\Http\Requests\Ai\PriceAdviceRequest;
+use App\Http\Requests\Ai\RoommatesRequest;
 use App\Services\AiService;
 use Illuminate\Http\JsonResponse;
 

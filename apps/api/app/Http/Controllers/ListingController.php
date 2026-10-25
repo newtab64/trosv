@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ListingBrowseRequest;
+use App\Http\Requests\Listing\ListingBrowseRequest;
 use App\Http\Resources\ListingDetailResource;
 use App\Http\Resources\ListingSummaryResource;
 use App\Models\Listing;

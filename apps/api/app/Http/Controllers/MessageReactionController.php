@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageReacted;
-use App\Http\Requests\ReactionUpdateRequest;
+use App\Http\Requests\Messaging\ReactionUpdateRequest;
 use App\Models\Message;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
