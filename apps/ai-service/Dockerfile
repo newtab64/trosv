@@ -14,10 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt \
         pip install --no-cache-dir -r requirements-dev.txt; \
     fi
 
-COPY *.py knowledge.md* ./
+COPY . .
 
 EXPOSE 8001
 
 # Khoi lenh that do compose gan (uvicorn ...); CMD giu cho chay doc lap.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
 

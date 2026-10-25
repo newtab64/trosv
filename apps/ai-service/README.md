@@ -18,7 +18,7 @@ GEMINI_API_KEY=your_key FAKE_MODE=false docker compose --profile ai up -d --buil
 
 # Độc lập:
 pip install -r requirements.txt
-GEMINI_API_KEY=your_key FAKE_MODE=false uvicorn main:app --port 8001
+GEMINI_API_KEY=your_key FAKE_MODE=false uvicorn app.main:app --port 8001
 ```
 
 Swagger UI: http://localhost:8001/docs

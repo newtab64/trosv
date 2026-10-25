@@ -1,13 +1,13 @@
 # AI Service - Handoff
 
 Trạng thái: stub FAKE_MODE hoàn thành (5 endpoint trả đúng shape hợp đồng).
-Việc còn lại: thay logic mẫu bằng LLM thật bên trong `main.py` khi có
+Việc còn lại: thay logic mẫu bằng LLM thật bên trong package `app/` khi có
 `LLM_API_KEY`. Hợp đồng đầu-cuối: [docs/contracts/AI_CONTRACT.md](../../docs/contracts/AI_CONTRACT.md).
 
 ## Bối cảnh
 
 - `docker-compose.yml` đã có service `ai-service` (profile `ai`): build từ
-  thư mục này, chạy `uvicorn main:app --port 8001`, env `FAKE_MODE` +
+  thư mục này, chạy `uvicorn app.main:app --port 8001`, env `FAKE_MODE` +
   `LLM_API_KEY` đọc từ `.env` gốc repo.
 - Backend làm proxy: `POST /api/ai/*` (hợp đồng §4) → forward JSON sang
   `AI_URL` (docker: `http://ai-service:8001`). Lỗi/không 2xx/sai shape →
