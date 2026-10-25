@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MessageSeen;
-use App\Events\MessageSent;
 use App\Http\Requests\Messaging\ConversationStoreRequest;
+use App\Http\Requests\Messaging\DirectMessageRequest;
 use App\Http\Requests\Messaging\MessageListRequest;
 use App\Http\Requests\Messaging\MessageSendRequest;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Listing;
-use App\Models\Message;
 use App\Models\User;
+use App\Services\ConversationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 /**
  * Messaging (API_CONTRACT §4 - "Nhắn tin"). One conversation per (student,
@@ -26,6 +23,10 @@ use Throwable;
  */
 class ConversationController extends Controller
 {
+    public function __construct(
+        protected ConversationService $conversationService
+    ) {}
+
     /**
      * POST /api/conversations (Student) - get-or-create single conversation per person.
      * Forward to existing conversation with landlord and automatically send room post link.
@@ -43,34 +44,13 @@ class ConversationController extends Controller
             throw new AuthorizationException;
         }
 
-        [$conversation, $wasCreated] = $this->findOrCreateConversation(
+        [$conversation, $wasCreated] = $this->conversationService->findOrCreateConversation(
             $student->id,
             $listing->user_id,
             $listing->id
         );
 
-        // Automatically send a link to the room post to the landlord
-        // unless already sent recently for this listing within 15 minutes.
-        $roomPath = "/rooms/{$listing->id}";
-        $recentlySent = $conversation->messages()
-            ->where('sender_id', $student->id)
-            ->where('body', 'like', "%{$roomPath}%")
-            ->where('created_at', '>=', now()->subMinutes(15))
-            ->exists();
-
-        if (! $recentlySent) {
-            $msg1 = $conversation->messages()->create([
-                'sender_id' => $student->id,
-                'body' => 'Chào bạn, mình quan tâm đến phòng trọ này:',
-            ]);
-            $msg2 = $conversation->messages()->create([
-                'sender_id' => $student->id,
-                'body' => $roomPath,
-            ]);
-            $conversation->touch();
-            rescue(fn () => broadcast(new MessageSent($msg1->load(['sender:id', 'conversation']))), report: false);
-            rescue(fn () => broadcast(new MessageSent($msg2->load(['sender:id', 'conversation']))), report: false);
-        }
+        $this->conversationService->sendRoomLinkIfNecessary($conversation, $student, $listing);
 
         return $this->respondWithConversation($request, $conversation, $wasCreated);
     }
@@ -80,15 +60,9 @@ class ConversationController extends Controller
      * conversation (listing_id null) with another student, from their
      * public profile. Targets that are landlords or yourself are 404.
      */
-    public function storeDirect(Request $request, User $user): JsonResponse
+    public function storeDirect(DirectMessageRequest $request, User $user): JsonResponse
     {
-        if ($user->role !== User::ROLE_STUDENT || $user->id === $request->user()->id) {
-            return response()->json([
-                'message' => 'Chỉ có thể nhắn tin cho sinh viên khác.',
-            ], 404);
-        }
-
-        [$conversation, $wasCreated] = $this->findOrCreateConversation(
+        [$conversation, $wasCreated] = $this->conversationService->findOrCreateConversation(
             $request->user()->id,
             $user->id,
             null
@@ -163,47 +137,12 @@ class ConversationController extends Controller
     {
         $this->authorizeParticipant($request, $conversation);
 
-        $isMultipart = $request->hasFile('file');
-
-        $validated = $request->validated();
-
-        $attachmentPath = null;
-        $attachmentName = null;
-
-        if ($isMultipart) {
-            // Files are PRIVATE (local disk): served only through signed URLs.
-            $uploaded = $request->file('file');
-            $rawName = $uploaded->getClientOriginalName();
-            // Sanitize against path traversal and HTTP header splitting (CRLF) in Content-Disposition
-            $attachmentName = preg_replace('/[\r\n\x00-\x1F\x7F]/', '', basename($rawName)) ?: 'attachment';
-            $attachmentPath = $uploaded->store("attachments/{$conversation->id}");
-        }
-
-        try {
-            $message = $conversation->messages()->create([
-                'sender_id' => $request->user()->id,
-                'body' => $validated['body'] ?? '',
-                'attachment_path' => $attachmentPath,
-                'attachment_name' => $attachmentName,
-            ]);
-        } catch (Throwable $e) {
-            // No orphaned upload on disk if the INSERT fails after the file
-            // was already stored (MessageSent broadcasts outside the try,
-            // exactly once, only after a committed row).
-            if ($attachmentPath !== null) {
-                Storage::disk('local')->delete($attachmentPath);
-            }
-
-            throw $e;
-        }
-
-        // Touch so GET /conversations sorts by latest activity.
-        $conversation->touch();
-
-        // Realtime bubble delivery over Reverb (replaces 5s client polling).
-        // Message shape mirrors MessageResource/contract §3 (body/reactions
-        // match MessageResource exactly; seen_at starts null).
-        rescue(fn () => broadcast(new MessageSent($message->load(['sender:id', 'conversation']))), report: false);
+        $message = $this->conversationService->sendMessage(
+            $conversation,
+            $request->user(),
+            $request->validated(),
+            $request->file('file')
+        );
 
         return response()->json([
             'data' => (new MessageResource($message->load('sender:id')))->resolve($request),
@@ -218,22 +157,7 @@ class ConversationController extends Controller
     {
         $this->authorizeParticipant($request, $conversation);
 
-        $now = now();
-
-        Message::where('conversation_id', $conversation->id)
-            ->where('sender_id', '!=', $request->user()->id)
-            ->whereNull('read_at')
-            ->update([
-                'read_at' => $now,
-                // Dấu đã xem: thời điểm NGƯỜI NHẬN mở thread.
-                'seen_at' => $now,
-            ]);
-
-        // Sender hiển thị "Đã xem" ngay khi receiver mở thread.
-        rescue(
-            fn () => broadcast(new MessageSeen($conversation, $request->user(), $now->toISOString())),
-            report: false
-        );
+        $this->conversationService->markRead($conversation, $request->user());
 
         return response()->json(['data' => null]);
     }
@@ -248,36 +172,6 @@ class ConversationController extends Controller
         if (! $request->user()->can('participate', $conversation)) {
             abort(404);
         }
-    }
-
-    /**
-     * Get or create a 1-on-1 conversation between two users.
-     *
-     * @return array{0: Conversation, 1: bool}
-     */
-    private function findOrCreateConversation(int $userAId, int $userBId, ?int $listingId = null): array
-    {
-        $conversation = Conversation::where(function ($q) use ($userAId, $userBId) {
-            $q->where('student_id', $userAId)->where('landlord_id', $userBId);
-        })->orWhere(function ($q) use ($userAId, $userBId) {
-            $q->where('student_id', $userBId)->where('landlord_id', $userAId);
-        })->first();
-
-        if (! $conversation) {
-            $conversation = Conversation::create([
-                'student_id' => $userAId,
-                'landlord_id' => $userBId,
-                'listing_id' => $listingId,
-            ]);
-
-            return [$conversation, true];
-        }
-
-        if ($listingId !== null && $conversation->listing_id !== $listingId) {
-            $conversation->update(['listing_id' => $listingId]);
-        }
-
-        return [$conversation, false];
     }
 
     /**
