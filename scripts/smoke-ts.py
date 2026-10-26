@@ -1,7 +1,7 @@
 """Smoke kiem tra frontend 'song': load trang, bat console error, kiem tra
 React render that (co noi dung that trong #root, khong trang trang).
 
-Usage: python3 e2e/smoke-ts.py [base_url]
+Usage: python3 scripts/smoke-ts.py [base_url]
 Mặc định http://localhost:5174 (dev compose stack).
 """
 import sys

@@ -46,7 +46,7 @@ http://localhost:5174 và API same-origin `/api`.
 | `npm run lint` | ESLint (TypeScript parser, quy tắc a11y và hooks) |
 | `npm run build` | `tsc --noEmit && vite build` - biên dịch TypeScript và đóng gói Vite |
 | `npx playwright test` | 11+ spec E2E trình duyệt thật; cần API :8000 đã seed + web :4173 (`E2E_BASE_URL`) |
-| `bash e2e-smoke.sh` | Smoke mọi API theo luồng người dùng, AI tắt vẫn xanh |
+| `bash ../../scripts/e2e-smoke.sh` | Smoke mọi API theo luồng người dùng, AI tắt vẫn xanh |
 | `npm run test:e2e` | Hành trình người dùng đầy đủ (Python + Chromium hệ thống) |
 
 ```bash

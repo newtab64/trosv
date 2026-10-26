@@ -78,7 +78,7 @@ run_docker() {
     curl -sf http://127.0.0.1:8000/api/cities >/dev/null || die "API khong tra loi - xem: docker compose logs backend"
     curl -sf http://127.0.0.1:5174/ >/dev/null || die "Web khong tra loi - xem: docker compose logs frontend"
     ok "API: http://localhost:8000/api - Web: http://localhost:5174"
-    ok "Smoke: bash apps/web/e2e-smoke.sh"
+    ok "Smoke: bash scripts/e2e-smoke.sh"
 }
 
 [[ "${1:-}" == "--stop" ]] && stop_all
@@ -239,5 +239,5 @@ echo "    Chu nha   : landlord1@example.com"
 echo ""
 echo "  Log   : $API_LOG | $WEB_LOG"
 echo "  Stop  : bash infra/deploy/deploy.sh --stop"
-echo "  Smoke : bash apps/web/e2e-smoke.sh"
+echo "  Smoke : bash scripts/e2e-smoke.sh"
 echo "=============================================="

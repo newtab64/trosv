@@ -5,9 +5,9 @@
 # through the app would trigger them (docs/contracts/API_CONTRACT.md).
 #
 # Usage:
-#   bash apps/web/e2e-smoke.sh
-#   API=http://other-host:8000/api bash apps/web/e2e-smoke.sh
-#   DEBUG=1 bash apps/web/e2e-smoke.sh     # show raw responses
+#   bash scripts/e2e-smoke.sh
+#   API=http://other-host:8000/api bash scripts/e2e-smoke.sh
+#   DEBUG=1 bash scripts/e2e-smoke.sh     # show raw responses
 #
 # Requires:
 #   - curl + jq
@@ -60,7 +60,7 @@ if ! curl -s -m 3 -o /dev/null "$API/listings?per_page=1"; then
   echo "✗ Backend not reachable at $API"
   echo "  Start it:   cd apps/api && php artisan serve"
   echo "  Or docker:  docker compose up -d --build backend"
-  echo "  Elsewhere:  API=http://host:8000/api bash apps/web/e2e-smoke.sh"
+  echo "  Elsewhere:  API=http://host:8000/api bash scripts/e2e-smoke.sh"
   exit 1
 fi
 AI_UP=false
