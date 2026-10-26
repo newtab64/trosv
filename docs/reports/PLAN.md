@@ -32,5 +32,5 @@ hành vi người dùng. Tất cả các phase dưới đây đã hoàn thành v
 2. Quên mật khẩu / đặt lại mật khẩu (blocker trước khi có người dùng thật).
 3. Audit dữ liệu ward/school của các tỉnh/TP còn lại theo danh mục hành
    chính sau sáp nhập (TP.HCM đã chuẩn hóa).
-4. LLM thật cho ai-service (chỉ cần `LLM_API_KEY`, `FAKE_MODE=false`).
+4. Cung cấp API key production cho AI service (mã nguồn đã tích hợp sẵn Google Gemini với model mặc định `gemini-3.5-flash-lite`, chỉ cần cấu hình `GEMINI_API_KEY` hoặc `LLM_API_KEY` và `FAKE_MODE=false`).
 5. httpOnly cookie session (thay localStorage token) - cân nhắc sau.

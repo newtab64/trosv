@@ -32,6 +32,8 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
 
 # Load domain knowledge base for RAG-lite chatbot grounding
 KNOWLEDGE_FILE = Path(__file__).parent / "knowledge.md"
+if not KNOWLEDGE_FILE.exists():
+    KNOWLEDGE_FILE = Path(__file__).parent.parent / "knowledge.md"
 KNOWLEDGE_BASE = ""
 if KNOWLEDGE_FILE.exists():
     try:

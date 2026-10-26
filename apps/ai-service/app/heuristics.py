@@ -1,103 +1,13 @@
-# ============================================================
-# TROSV AI service - stub FAKE_MODE dung docs/contracts/AI_CONTRACT.md.
-#
-# Trang thai: stub demo. Moi endpoint tra du lieu gia hop ly DUNG SHAPE
-# hop contract khi FAKE_MODE=true, khong can LLM key. Khi FAKE_MODE=false,
-# moi endpoint tra 503 (backend se chuyen thanh 503 "Dich vu AI tam thoi
-# khong kha dung." cho frontend) - call LLM that se bu sung sau theo
-# docs/contracts/AI_CONTRACT.md §2.
-#
-# Chay: docker compose --profile ai up -d   (hoac)
-#       pip install -r requirements.txt && uvicorn main:app --port 8001
-# Thu:  curl -X POST localhost:8001/price-advice -H 'Content-Type: application/json' \
-#         -d '{"listing":{"type":"room","price":2500000,"area_m2":22.5,"ward":"Thu Duc","amenities":[]},"stats":{"count":12,"min":1800000,"median":2300000,"max":3200000}}'
-# ============================================================
-
-import os
 from typing import Any, Optional
+from fastapi import HTTPException
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-from gemini_service import (
-    chat_with_gemini,
-    generate_description_with_gemini,
-    generate_price_advice_with_gemini,
-    get_api_key,
-    is_gemini_enabled,
-    rank_roommates_with_gemini,
-    recommend_areas_with_gemini,
+from app.schemas import (
+    AreasReq,
+    ChatReq,
+    DescriptionReq,
+    PriceAdviceReq,
+    RoommatesReq,
 )
-
-FAKE_MODE = os.getenv("FAKE_MODE", "true").lower() != "false"
-
-app = FastAPI(title="TROSV AI service", version="0.1.0")
-
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    """Health check endpoint confirming AI service availability."""
-    return {"status": "ok"}
-
-
-class BaseReq(BaseModel):
-    """Request base: bo qua truong khong khai bao (contract cho phep)."""
-
-    model_config = {"extra": "ignore"}
-
-
-class RoommatesReq(BaseReq):
-    """POST /roommates - requester + candidate profiles de xep hang."""
-
-    requester: dict[str, Any]
-    # Hop contract, cac truong khong phai bat buoc co the la null HOAC thieu.
-    candidates: Optional[list[dict[str, Any]]] = []
-    limit: int = 5
-
-
-class PriceAdviceReq(BaseReq):
-    """POST /price-advice - tin dang + thong ke thi truong tu backend."""
-
-    listing: dict[str, Any]
-    stats: dict[str, Any]
-
-
-class AreasReq(BaseReq):
-    """POST /areas - uu tien sinh vien + thong ke tung khu vuc."""
-
-    preferences: dict[str, Any]
-    areas: Optional[list[dict[str, Any]]] = []
-    limit: int = 3
-
-
-class ChatReq(BaseReq):
-    """POST /chat - cau hoi + lich su hoi thoai + ngu canh tin dang."""
-
-    message: str
-    history: Optional[list[dict[str, Any]]] = []
-    listing: Optional[dict[str, Any]] = None
-
-
-class DescriptionReq(BaseReq):
-    """POST /description - thong tin co ban cua tin dang can viet mo ta."""
-
-    title: str
-    type: Optional[str] = None
-    price: Optional[int] = None
-    area_m2: Optional[float] = None
-    address: Optional[str] = None
-    ward: Optional[str] = None
-    # Backend co the gui null thay vi bo qua (contract cho phep ca hai).
-    amenities: Optional[list[str]] = []
-
-
-def guard_fake() -> None:
-    """Non-2xx neu FAKE_MODE tat va khong co API key - backend doi thanh 503 theo contract."""
-    if not FAKE_MODE and not get_api_key():
-        raise HTTPException(
-            status_code=503,
-            detail="GEMINI_API_KEY hoac LLM_API_KEY chua duoc cau hinh",
-        )
 
 
 def _int_or(value: Any, default: int) -> int:
@@ -142,17 +52,8 @@ def _score_candidate(req: RoommatesReq, cand: dict[str, Any]) -> tuple[int, str]
     return min(score, 100), reason
 
 
-@app.post("/roommates")
-def roommates(req: RoommatesReq) -> dict[str, Any]:
-    """Xep hang ung vien ban cung phong: tot nhat truoc, toi da `limit`."""
-    if is_gemini_enabled() and req.candidates:
-        gemini_res = rank_roommates_with_gemini(
-            req.requester, req.candidates, req.limit
-        )
-        if gemini_res:
-            return gemini_res
-
-    guard_fake()
+def score_roommates(req: RoommatesReq) -> dict[str, Any]:
+    """Heuristic scoring for roommates."""
     scored = sorted(
         ((_score_candidate(req, c), c["id"]) for c in (req.candidates or [])),
         key=lambda pair: (-pair[0][0], pair[1]),
@@ -166,15 +67,8 @@ def roommates(req: RoommatesReq) -> dict[str, Any]:
 
 
 # --------------------------------------------------------- price-advice
-@app.post("/price-advice")
-def price_advice(req: PriceAdviceReq) -> dict[str, Any]:
-    """Danh gia gia tin dang so voi median thi truong backend tinh san."""
-    if is_gemini_enabled():
-        gemini_res = generate_price_advice_with_gemini(req.listing, req.stats)
-        if gemini_res:
-            return gemini_res
-
-    guard_fake()
+def advise_price(req: PriceAdviceReq) -> dict[str, Any]:
+    """Heuristic price evaluation."""
     price = _int_or(req.listing.get("price"), 0)
     median = _int_or(req.stats.get("median"), 0)
     if median <= 0:
@@ -239,24 +133,14 @@ def _describe_area(area: dict[str, Any], avg: int) -> str:
     return ("; ".join(bits) + ".").capitalize()
 
 
-@app.post("/areas")
-def areas(req: AreasReq) -> dict[str, Any]:
-    """Xep hang khu vuc theo ngan sach + uu tien: tot nhat truoc."""
-    if is_gemini_enabled() and req.areas:
-        gemini_res = recommend_areas_with_gemini(
-            req.preferences, req.areas, req.limit
-        )
-        if gemini_res:
-            return gemini_res
-
-    guard_fake()
+def recommend_areas(req: AreasReq) -> dict[str, Any]:
+    """Heuristic area recommendations."""
     prefs = req.preferences
     budget_max = _int_or(prefs.get("budget_max"), 0)
     budget_min = _int_or(prefs.get("budget_min"), 0)
     priorities = set(prefs.get("priorities") or [])
 
     def score(area: dict[str, Any]) -> tuple[int, str]:
-        """Diem khu vuc: co so 50 + ngan sach + uu tien, kem mo ta."""
         avg = _int_or(area.get("avg_price"), 0)
         s = 50
         s += _budget_bonus(avg, budget_min, budget_max)
@@ -313,17 +197,8 @@ def _reply_about_listing(listing: dict[str, Any]) -> str:
     )
 
 
-@app.post("/chat")
-def chat(req: ChatReq) -> dict[str, Any]:
-    """Tra loi FAKE_MODE theo tu khoa; ket thuc bang mui ten phap ly khi can."""
-    if is_gemini_enabled():
-        gemini_res = chat_with_gemini(
-            req.message, req.history or [], req.listing
-        )
-        if gemini_res:
-            return gemini_res
-
-    guard_fake()
+def reply_chat(req: ChatReq) -> dict[str, Any]:
+    """Heuristic chatbot replies."""
     msg = req.message.lower()
     tail = " Thong tin mang tinh tham khao, khong thay the tu van phap ly."
     if any(k in msg for k in _DEPOSIT_KW):
@@ -344,15 +219,8 @@ def chat(req: ChatReq) -> dict[str, Any]:
 _TYPE_LABELS = {"room": "Phong tro", "apartment": "Can ho", "house": "Nha nguyen can"}
 
 
-@app.post("/description")
-def description(req: DescriptionReq) -> dict[str, Any]:
-    """Viet mo ta tin dang tu thong tin co ban (chi dung du lieu duoc cung cap)."""
-    if is_gemini_enabled():
-        gemini_res = generate_description_with_gemini(req.model_dump())
-        if gemini_res:
-            return gemini_res
-
-    guard_fake()
+def generate_description(req: DescriptionReq) -> dict[str, Any]:
+    """Heuristic description generation."""
     type_label = _TYPE_LABELS.get(req.type or "", "Phong tro")
     parts: list[str] = [f"{type_label} \u201c{req.title}\u201d dang cho thue"]
     if req.area_m2:

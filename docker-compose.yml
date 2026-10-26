@@ -258,7 +258,7 @@ services:
     # AI service (docs/contracts/AI_CONTRACT.md). Stub FAKE_MODE du file - chi duoc goi boi
     # backend, khong co DB. Neu AI chet, backend tu tra 503 lich su.
     build: ./apps/ai-service
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
     restart: unless-stopped
     logging: *default-logging
     environment:
@@ -276,6 +276,19 @@ services:
       retries: 5
       start_period: 15s
     profiles: [ai]
+
+  ai-service-test:
+    profiles: [test]
+    build:
+      context: ./apps/ai-service
+      args:
+        INSTALL_DEV: "true"
+    logging: *default-logging
+    environment:
+      FAKE_MODE: "true"
+      PYTHONPATH: /app
+    volumes:
+      - ./apps/ai-service/tests:/app/tests:ro
 
 volumes:
   pgdata:

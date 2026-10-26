@@ -23,6 +23,15 @@ updates:
       minor-and-patch:
         update-types: ["minor", "patch"]
 
+  - package-ecosystem: pip
+    directory: /apps/ai-service
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: docker
     directory: /apps/api
     schedule:

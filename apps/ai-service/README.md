@@ -4,21 +4,23 @@ FastAPI service triển khai [docs/contracts/AI_CONTRACT.md](../../docs/contract
 (5 endpoint + `/health`). **Chỉ Backend gọi service này** - frontend không
 bao giờ gọi trực tiếp.
 
-Trạng thái hiện tại: **Đã tích hợp Google Gemini (Gemini 1.5 Flash)**.
-Khi `GEMINI_API_KEY` (hoặc `LLM_API_KEY`) được cung cấp và `FAKE_MODE=false`,
-toàn bộ 5 endpoint đều gọi model Gemini để sinh văn bản và đánh giá thông minh
-với structured JSON output. Nếu không có key hoặc gặp sự cố mạng/hạn mức,
-hệ thống tự động kích hoạt engine heuristic dự phòng (fallback) để đảm bảo 100% uptime.
+Trạng thái hiện tại: **Đã tích hợp Google Gemini (mô hình mặc định `gemini-3.5-flash-lite`)**.
+- Khi `FAKE_MODE=true` (mặc định cho kiểm thử và local dev không có key): toàn bộ 5 endpoint dùng engine heuristic nội bộ, không gọi ra ngoài và không cần API key.
+- Khi `FAKE_MODE=false`: yêu cầu có `GEMINI_API_KEY` (hoặc `LLM_API_KEY`). Nếu không có key, service trả HTTP 503 (`guard_fake`). Khi có key, service gọi Gemini với model mặc định `gemini-3.5-flash-lite` (tự động thử các model flash dự phòng `gemini-3.5-flash-lite`, `gemini-3.5-flash`). Nếu tất cả model Gemini đều lỗi/hạn mức, service tự động kích hoạt engine heuristic dự phòng (fallback) để đảm bảo uptime.
 
 ## Chạy
 
 ```bash
-# Trong docker stack (với Gemini):
-GEMINI_API_KEY=your_key FAKE_MODE=false docker compose --profile ai up -d --build ai-service
-
-# Độc lập:
+# Local dev / kiểm thử (FAKE_MODE, không cần key):
+FAKE_MODE=true docker compose --profile ai up -d --build ai-service
+# Hoặc chạy độc lập:
 pip install -r requirements.txt
-GEMINI_API_KEY=your_key FAKE_MODE=false uvicorn main:app --port 8001
+FAKE_MODE=true uvicorn app.main:app --port 8001
+
+# Chạy với Google Gemini thật:
+GEMINI_API_KEY=your_key FAKE_MODE=false docker compose --profile ai up -d --build ai-service
+# Hoặc chạy độc lập:
+GEMINI_API_KEY=your_key FAKE_MODE=false uvicorn app.main:app --port 8001
 ```
 
 Swagger UI: http://localhost:8001/docs
