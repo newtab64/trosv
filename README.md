@@ -34,11 +34,11 @@ graph LR
 ## Chạy trên máy
 
 Cần Docker (hoặc Podman) trên Debian. Chi tiết đầy đủ trong
-[docs/DEPLOY.md](docs/DEPLOY.md).
+[docs/runbooks/DEPLOY.md](docs/runbooks/DEPLOY.md).
 
 ```bash
 cp .env.example .env    # điền APP_KEY (lệnh tạo có sẵn trong file)
-docker compose up -d --build
+make up                 # khởi động container (hoặc COMPOSE="docker compose" make up)
 ```
 
 | Dịch vụ | Địa chỉ |
@@ -52,26 +52,35 @@ Dữ liệu demo: đặt `SEED_ON_BOOT=1` trong `.env`, hoặc chạy tay
 Tài khoản demo (mật khẩu `password`): `student1@example.com` (sinh viên),
 `landlord1@example.com` (chủ nhà).
 
-Lệnh hay dùng:
+Lệnh hay dùng (qua Makefile):
 
 ```bash
-docker compose logs -f backend     # log
-docker compose down                # tắt, giữ dữ liệu
-docker compose down -v             # tắt và XÓA dữ liệu
+make logs               # xem log container theo thời gian thực
+make down               # tắt, giữ nguyên dữ liệu volumes
+make smoke              # chạy smoke test API và xác thực
+make check              # chạy toàn bộ lint-api, test-api, lint-web, build-web
+make help               # xem tất cả các target hỗ trợ
 ```
 
-Chạy không Docker (PHP + Node trực tiếp): `bash deploy.sh` (lần sau thêm
+> [!WARNING]
+> **Xóa toàn bộ dữ liệu (Full Reset)**: Khi cần dọn dẹp triệt để và **XÓA TOÀN BỘ DỮ LIỆU** (bao gồm volume cơ sở dữ liệu `pgdata` và volume lưu trữ file `trosv-storage`), chạy lệnh Docker trực tiếp:
+> ```bash
+> docker compose down -v
+> ```
+> *Makefile cố tình không cung cấp target này để tránh rủi ro vô tình xóa mất dữ liệu.*
+
+Chạy không Docker (PHP + Node trực tiếp): `bash infra/deploy/deploy.sh` (lần sau thêm
 `--quick` để giữ DB).
 
 ## Kiểm thử
 
 | Lệnh | Phạm vi |
 |---|---|
-| `php artisan test` (trong thư mục `backend/`) | 210+ Feature test, gồm ma trận phân quyền |
+| `php artisan test` (trong thư mục `apps/api/`) | 210+ Feature test, gồm ma trận phân quyền |
 | `./vendor/bin/pint --test` | Code style backend |
-| `npm run lint && npm run build` (thư mục `frontend/`) | ESLint + kiểm CSS + TypeScript strict + build |
-| `npx playwright test` (thư mục `frontend/`) | E2E trình duyệt thật, cần API :8000 + web :4173 |
-| `bash frontend/e2e-smoke.sh` | Smoke mọi API theo luồng người dùng, AI tắt vẫn xanh |
+| `npm run lint && npm run build` (thư mục `apps/web/`) | ESLint + kiểm CSS + TypeScript strict + build |
+| `npx playwright test` (thư mục `apps/web/`) | E2E trình duyệt thật, cần API :8000 + web :4173 |
+| `bash scripts/e2e-smoke.sh` | Smoke mọi API theo luồng người dùng, AI tắt vẫn xanh |
 
 CI (GitHub Actions) chạy đủ 4 job: backend, frontend, e2e, quét secret.
 Merge vào `stable` khi xanh là tự động deploy.
@@ -89,27 +98,34 @@ Merge vào `stable` khi xanh là tự động deploy.
 
 | File | Nội dung | Đọc khi |
 |---|---|---|
-| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | Hợp đồng API: endpoint, shape JSON, mã lỗi | Làm backend/frontend - nguồn sự thật, đổi API phải sửa đây trước |
-| [docs/AI_CONTRACT.md](docs/AI_CONTRACT.md) | Hợp đồng giữa Backend và AI service | Làm AI service |
-| [docs/ERD.md](docs/ERD.md) | Cơ sở dữ liệu: bảng, quan hệ, dữ liệu seed | Làm backend, sửa migration |
+| [docs/contracts/API_CONTRACT.md](docs/contracts/API_CONTRACT.md) | Hợp đồng API: endpoint, shape JSON, mã lỗi | Làm backend/frontend - nguồn sự thật, đổi API phải sửa đây trước |
+| [docs/contracts/AI_CONTRACT.md](docs/contracts/AI_CONTRACT.md) | Hợp đồng giữa Backend và AI service | Làm AI service |
+| [docs/contracts/ERD.md](docs/contracts/ERD.md) | Cơ sở dữ liệu: bảng, quan hệ, dữ liệu seed | Làm backend, sửa migration |
 | [docs/ONBOARDING.md](docs/ONBOARDING.md) | Onboarding người mới | Ngày đầu vào nhóm |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploy lên máy chủ Debian | Triển khai production |
+| [docs/runbooks/DEPLOY.md](docs/runbooks/DEPLOY.md) | Deploy lên máy chủ Debian | Triển khai production |
+| [docs/runbooks/DEMO.md](docs/runbooks/DEMO.md) | Chạy thử nghiệm nhanh (demo) | Demo nội bộ hoặc đánh giá tính năng |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Quy ước phân nhánh, commit style, chạy kiểm tra | Trước khi mở Pull Request |
 | [SECURITY.md](SECURITY.md) | Chính sách bảo mật, cách báo cáo lỗ hổng | Báo cáo hoặc tìm hiểu biện pháp bảo mật |
-| [docs/TECH-DEBT.md](docs/TECH-DEBT.md) | Sổ nợ kỹ thuật và quy trình theo dõi | Trước khi refactor |
-| [docs/BACKEND-AUDIT-REPORT.md](docs/BACKEND-AUDIT-REPORT.md) | Báo cáo kiểm tra và tối ưu hóa backend toàn diện | Tham khảo kiến trúc và hiệu năng backend |
-| [scripts/RESTORE.md](scripts/RESTORE.md) | Quy trình restore từ backup | Khi cần khôi phục dữ liệu |
-| [scripts/ROLLBACK.md](scripts/ROLLBACK.md) | Quy trình rollback code | Khi deployment lỗi |
+| [docs/reports/TECH-DEBT.md](docs/reports/TECH-DEBT.md) | Sổ nợ kỹ thuật và quy trình theo dõi | Trước khi refactor |
+| [docs/reports/BACKEND-AUDIT-REPORT.md](docs/reports/BACKEND-AUDIT-REPORT.md) | Báo cáo kiểm tra và tối ưu hóa backend toàn diện | Tham khảo kiến trúc và hiệu năng backend |
+| [docs/reports/PLAN.md](docs/reports/PLAN.md) | Kế hoạch triển khai và roadmap | Nắm định hướng phát triển |
+| [infra/backup/RESTORE.md](infra/backup/RESTORE.md) | Quy trình restore từ backup | Khi cần khôi phục dữ liệu |
+| [docs/runbooks/ROLLBACK.md](docs/runbooks/ROLLBACK.md) | Quy trình rollback code | Khi deployment lỗi |
 
 ## Cấu trúc
 
 ```
 trosv/
+├── Makefile             # Quản lý và kiểm tra nhanh (help, up, down, check, smoke, ...)
 ├── docker-compose.yml   # DB + backend + frontend + reverb + queue + scheduler
 │                        # (+ caddy khi profile tls, + ai-service khi profile ai)
 ├── .env.example
-├── docs/                # hợp đồng API/AI, ERD, deploy, onboarding, báo cáo audit
-├── frontend/            # React 18 SPA (TypeScript strict, Vite, Tailwind CSS v4, Radix UI, Leaflet)
-├── backend/             # Laravel API (PHP 8.3, PostgreSQL 16, Sanctum, Reverb)
-├── ai-service/          # FastAPI (stub FAKE_MODE)
-└── scripts/             # backup, restore, rollback
+├── CONTRIBUTING.md      # Quy ước đóng góp, nhánh git, commit style
+├── docs/                # contracts/, architecture/, reports/, runbooks/, ONBOARDING.md
+├── infra/               # docker/ (Caddyfile), deploy/ (deploy.sh), backup/ (backup.sh, RESTORE.md)
+├── scripts/             # công cụ nợ kỹ thuật & dev helpers
+└── apps/
+    ├── api/             # Laravel API (PHP 8.3, PostgreSQL 16, Sanctum, Reverb)
+    ├── web/             # React 18 SPA (TypeScript strict, Vite, Tailwind CSS v4, Radix UI, Leaflet)
+    └── ai-service/      # FastAPI (stub FAKE_MODE)
 ```

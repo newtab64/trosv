@@ -32,8 +32,10 @@
 # Tao APP_KEY khong can PHP tren may:
 #   echo "APP_KEY=$(docker run --rm php:8.3-cli php -r 'echo "base64:".base64_encode(random_bytes(32));')" >> .env
 #
-# REVERB key dong bo: root .env va backend/.env phai cung REVERB_APP_*.
+# REVERB key dong bo: root .env va apps/api/.env phai cung REVERB_APP_*.
 # ============================================================
+
+name: trosv
 
 x-default-logging: &default-logging
   driver: json-file
@@ -92,11 +94,11 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build: ./apps/api
     restart: unless-stopped
     logging: *default-logging
     env_file:
-      - path: ./backend/.env
+      - path: ./apps/api/.env
         required: false # bo sung bien phu (khong ghi de block ben duoi)
     # migrate luon chay (idempotent, seeder idempotent nen SEED_ON_BOOT=1
     # chi don gian chay them db:seed - an toan reboot bat ky luc nao).
@@ -123,13 +125,38 @@ services:
       db:
         condition: service_healthy
 
+  backend-test:
+    profiles: [test]
+    build:
+      context: ./apps/api
+      args:
+        COMPOSER_FLAGS: ""
+    logging: *default-logging
+    env_file:
+      - path: ./apps/api/.env
+        required: false
+    environment:
+      <<: *backend-env
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      DB_DATABASE: rental_test
+      CACHE_STORE: array
+      BCRYPT_ROUNDS: 4
+      TRUSTED_PROXIES: ""
+    entrypoint: ["sh", "-c", "touch /var/www/html/.env && exec docker-php-entrypoint \"$$@\"", "--"]
+    volumes:
+      - ./apps/api/tests:/var/www/html/tests:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
   reverb:
-    build: ./backend
+    build: ./apps/api
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
     restart: unless-stopped
     logging: *default-logging
     env_file:
-      - path: ./backend/.env
+      - path: ./apps/api/.env
         required: false
     environment: *backend-env
     ports:
@@ -147,12 +174,12 @@ services:
       - backend
 
   queue:
-    build: ./backend
+    build: ./apps/api
     command: php artisan queue:work --tries=3 --timeout=30
     restart: unless-stopped
     logging: *default-logging
     env_file:
-      - path: ./backend/.env
+      - path: ./apps/api/.env
         required: false
     environment: *backend-env
     depends_on:
@@ -160,12 +187,12 @@ services:
         condition: service_healthy
 
   scheduler:
-    build: ./backend
+    build: ./apps/api
     command: sh -c "while true; do php artisan schedule:run; sleep 60; done"
     restart: unless-stopped
     logging: *default-logging
     env_file:
-      - path: ./backend/.env
+      - path: ./apps/api/.env
         required: false
     environment: *backend-env
     depends_on:
@@ -174,7 +201,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./apps/web
       args:
         # Mac dinh SAME-ORIGIN (/api qua nginx proxy) - dung cho ca dev
         # lẫn production sau Caddy. Chi dat VITE_API_URL=https://... trong
@@ -219,7 +246,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./infra/docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data # chung chi + ACME accounts
       - caddy_config:/config
     depends_on:
@@ -228,10 +255,10 @@ services:
       - reverb
 
   ai-service:
-    # AI service (AI_CONTRACT.md). Stub FAKE_MODE du file - chi duoc goi boi
+    # AI service (docs/contracts/AI_CONTRACT.md). Stub FAKE_MODE du file - chi duoc goi boi
     # backend, khong co DB. Neu AI chet, backend tu tra 503 lich su.
-    build: ./ai-service
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    build: ./apps/ai-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
     restart: unless-stopped
     logging: *default-logging
     environment:
@@ -249,6 +276,19 @@ services:
       retries: 5
       start_period: 15s
     profiles: [ai]
+
+  ai-service-test:
+    profiles: [test]
+    build:
+      context: ./apps/ai-service
+      args:
+        INSTALL_DEV: "true"
+    logging: *default-logging
+    environment:
+      FAKE_MODE: "true"
+      PYTHONPATH: /app
+    volumes:
+      - ./apps/ai-service/tests:/app/tests:ro
 
 volumes:
   pgdata:

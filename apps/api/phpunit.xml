@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <!-- Tests must never touch the dev database "rental" (RefreshDatabase wipes it).
+             Only connection + database are forced: in Docker the compose env already
+             provides DB_HOST=db (forcing 127.0.0.1 here would break container tests),
+             while locally the values fall back to apps/api/.env (127.0.0.1). -->
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_DATABASE" value="rental_test" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="5432"/>
+        <env name="DB_USERNAME" value="rental"/>
+        <env name="DB_PASSWORD" value="rental"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <!-- Broadcast qua "null": PHPUnit kiem chung HTTP response va event,
+             khong kiem chung transport WebSocket. Truoc day suite phu thuoc
+             ngam vao Reverb song o localhost:8080 - bat luc demo stack bi
+             dung de cho Docker, 5 test bong vang. Chat test dung
+             Broadcast::fake(); channel auth co BroadcastChannelTest rieng. -->
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="TRUSTED_PROXIES" value="" force="true"/>
+    </php>
+</phpunit>

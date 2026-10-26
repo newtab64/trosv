@@ -27,11 +27,11 @@ desktop.ini
 .phpunit.result.cache
 .phpunit.cache/
 
-# ===== Dependencies (backend, frontend, ai-service) =====
+# ===== Dependencies (apps/api, apps/web, apps/ai-service) =====
 node_modules/
 vendor/
 
-# ===== Python (ai-service) =====
+# ===== Python (apps/ai-service) =====
 __pycache__/
 *.py[cod]
 .venv/
@@ -42,7 +42,7 @@ venv/
 dist/
 build/
 
-# ===== Laravel runtime (backend/storage) =====
+# ===== Laravel runtime (apps/api/storage) =====
 storage/app/private/*
 storage/app/public/*
 storage/framework/cache/data/*
@@ -64,7 +64,7 @@ skills-lock.json
 .browser-check/
 docker-compose.local-test.yml
 freebuff-chat-*.md
-frontend/src/styles/.css-baseline/
+apps/web/src/styles/.css-baseline/
 
 # Backups (backup.sh ghi vao ./backups hoac BACKUP_DIR bat ky)
 backups/

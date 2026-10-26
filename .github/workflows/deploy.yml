@@ -55,7 +55,7 @@ jobs:
         if: steps.gate.outputs.match == 'true'
         run: |
           if [ -z "$HOST" ] || [ -z "$USER" ] || [ -z "$KEY" ]; then
-            echo "::warning::Deploy secrets (DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY) are not set on the 'production' environment - skipping deploy. Configure them to enable automatic deploys (see docs/DEPLOY.md)."
+            echo "::warning::Deploy secrets (DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY) are not set on the 'production' environment - skipping deploy. Configure them to enable automatic deploys (see docs/runbooks/DEPLOY.md)."
             echo "configured=false" >> "$GITHUB_OUTPUT"
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"

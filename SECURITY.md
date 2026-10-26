@@ -32,10 +32,10 @@ repo.
   `X-Frame-Options`, CSP **enforcing** chọn theo loại response - nghiêm
   `default-src 'none'; frame-ancestors 'none'` cho JSON/binary (toàn bộ
   API), policy riêng cho trang HTML duy nhất
-  (`backend/app/Http/Middleware/SecurityHeaders.php`).
+  (`apps/api/app/Http/Middleware/SecurityHeaders.php`).
 - Production fail-fast: backend từ chối phục vụ HTTP khi `APP_DEBUG=true`
   hoặc thiếu `APP_KEY`
-  (`backend/app/Http/Middleware/EnsureProductionConfig.php` - console và
+  (`apps/api/app/Http/Middleware/EnsureProductionConfig.php` - console và
   composer vẫn chạy bình thường để CI/deploy không vỡ).
 - Token Sanctum hết hạn sau 30 ngày (`SANCTUM_TOKEN_TTL_MINUTES`).
 - Extension ảnh tin đăng suy từ nội dung đã xác thực, không tin tên file
