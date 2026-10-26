@@ -23,6 +23,7 @@
 # ============================================================
 set -u
 API="${API:-http://127.0.0.1:8000/api}"
+API_ORIGIN="$(echo "$API" | sed -E 's#^([a-zA-Z]+://[^/]+).*#\1#')"
 AI_URL="${AI_URL:-http://127.0.0.1:8001}"
 AJ='-H Accept:application/json'
 PASS=0; FAIL=0
@@ -157,6 +158,9 @@ R=$(GET "$TTOKEN" "$API/favorites"); DBG "$R"
 check "favorites page +1" "$(JQ "$R" '.data|length')" "$((BASE_FAV+1))"
 
 echo "=== STUDENT: Messaging (chat button + Messages pages) ==="
+# Conversation step: pick a listing belonging to landlord1 (instead of sort=newest) so landlord1 owns it
+LTOKEN=$(JQ "$(NOPOST "$API/login" '{"email":"landlord1@example.com","password":"password"}')" '.data.token')
+LID=$(JQ "$(GET "$LTOKEN" "$API/my/listings")" '.data[0].id')
 R=$(POST "$TTOKEN" "$API/conversations" "{\"listing_id\":$LID}"); DBG "$R"
 CONV=$(JQ "$R" '.data.id')
 check "conversation created w/ listing" "$(JQ "$R" '.data.listing.id')" "$LID"
@@ -174,6 +178,7 @@ printf '%%PDF-1.4 test' > /tmp/e2e.pdf
 R=$(POSTF "$TTOKEN" "$API/conversations/$CONV/messages" -F "body=Xem hop dong nhe" -F "file=@/tmp/e2e.pdf;type=application/pdf"); DBG "$R"
 check "attachment message name" "$(JQ "$R" '.data.attachment_name')" "e2e.pdf"
 AURL=$(JQ "$R" '.data.attachment_url')
+[[ "$AURL" == /* ]] && AURL="${API_ORIGIN}${AURL}"
 check "attachment signed url 200" "$(curl -s -o /dev/null -w '%{http_code}' "$AURL")" "200"
 R=$(GET "$TTOKEN" "$API/conversations/$CONV/messages?after_id=$MSG1"); DBG "$R"
 check "after_id returns newer msg" "$(JQ "$R" '.data[0].attachment_name')" "e2e.pdf"
