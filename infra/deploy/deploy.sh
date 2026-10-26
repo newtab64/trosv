@@ -165,7 +165,7 @@ if [[ "${1:-}" != "--quick" ]]; then
     echo ">> migrate:fresh --seed (xoa va tao lai du lieu demo)..."
     php artisan migrate:fresh --seed --force >/dev/null \
         || die "migrate/seed that bai - kiem tra DB rental/rental trong apps/api/.env"
-    ok "Database: 34 tinh/TP, wards, schools, users, listings"
+    ok "Database: 3 tinh/TP, wards, schools, users, listings"
 else
     ok "Giu DB hien tai (--quick)"
 fi
