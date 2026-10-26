@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import api, { errFieldErrors, errMessage } from "@/api/axiosClient";
+import { errFieldErrors, errMessage } from "@/api/axiosClient";
+import { updateProfile } from "@/api/authApi";
 import { getSchools } from "@/api/listingApi";
 import type { School } from "@/types/api";
 import { Button } from "@/ui/button";
@@ -87,7 +88,7 @@ export default function Profile() {
     }
 
     try {
-      await api.put("/profile", payload);
+      await updateProfile(payload);
       await refreshUser();
       toast("Đã lưu hồ sơ.");
     } catch (err) {

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// CI-grade smoke suite (docs/reports/PLAN.md Phase 1). The richer journey checks stay in
-// .browser-check/ (npm run test:e2e / test:prod); this is what CI runs.
+// CI-grade smoke suite (docs/reports/PLAN.md Phase 1). Feature-grouped specs in
+// e2e/ (npm run test:e2e); this is what CI runs.
 //
 // Requires the demo stack to be up (API :8000 + Vite :5173), e.g.:
 //   bash infra/deploy/deploy.sh --quick

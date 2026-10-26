@@ -40,7 +40,7 @@ docker compose up -d --build
 Chạy không Docker (PHP + Node trực tiếp): `bash infra/deploy/deploy.sh` (lần sau thêm
 `--quick`).
 
-Smoke nhanh API: `bash apps/web/e2e-smoke.sh` - xanh là đủ để bắt đầu code.
+Smoke nhanh API: `bash scripts/e2e-smoke.sh` - xanh là đủ để bắt đầu code.
 
 ## 3. Đọc gì tiếp theo, theo vai trò
 

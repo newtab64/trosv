@@ -78,7 +78,7 @@ run_docker() {
     curl -sf http://127.0.0.1:8000/api/cities >/dev/null || die "API khong tra loi - xem: docker compose logs backend"
     curl -sf http://127.0.0.1:5174/ >/dev/null || die "Web khong tra loi - xem: docker compose logs frontend"
     ok "API: http://localhost:8000/api - Web: http://localhost:5174"
-    ok "Smoke: bash apps/web/e2e-smoke.sh"
+    ok "Smoke: bash scripts/e2e-smoke.sh"
 }
 
 [[ "${1:-}" == "--stop" ]] && stop_all
@@ -165,7 +165,7 @@ if [[ "${1:-}" != "--quick" ]]; then
     echo ">> migrate:fresh --seed (xoa va tao lai du lieu demo)..."
     php artisan migrate:fresh --seed --force >/dev/null \
         || die "migrate/seed that bai - kiem tra DB rental/rental trong apps/api/.env"
-    ok "Database: 34 tinh/TP, wards, schools, users, listings"
+    ok "Database: 3 tinh/TP, wards, schools, users, listings"
 else
     ok "Giu DB hien tai (--quick)"
 fi
@@ -239,5 +239,5 @@ echo "    Chu nha   : landlord1@example.com"
 echo ""
 echo "  Log   : $API_LOG | $WEB_LOG"
 echo "  Stop  : bash infra/deploy/deploy.sh --stop"
-echo "  Smoke : bash apps/web/e2e-smoke.sh"
+echo "  Smoke : bash scripts/e2e-smoke.sh"
 echo "=============================================="

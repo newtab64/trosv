@@ -52,7 +52,7 @@ test-e2e: ## Chay kiem thu giao dien E2E Playwright
 	cd apps/web && npx playwright test
 
 smoke: ## Chay bo kiem thu smoke test API va quy trinh nghiep vu
-	bash apps/web/e2e-smoke.sh
+	bash scripts/e2e-smoke.sh
 
 backup: ## Chay sao luu database va storage volume vao thu muc backups
 	bash infra/backup/backup.sh
