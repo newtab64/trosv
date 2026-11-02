@@ -13,7 +13,7 @@
 
 # ---- Build stage ----------------------------------------------------------
 # Node 22 = LTS dang duoc support (Node 20 het EOL 4/2026).
-FROM node:22-trixie AS build
+FROM node:26-trixie AS build
 
 # Declared so compose build args actually reach `npm run build`. Docker
 # silently drops undeclared args, which would bake the localhost fallbacks
