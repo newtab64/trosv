@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["e2e/**/*.spec.ts"],
+  "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@fontsource-variable/inter",
+    "@fontsource-variable/inter-tight",
+    "tailwindcss"
+  ]
+}

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 /* Popover: floating surfaces (with menus and dialogs) are the only ones that get a shadow. */
 const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
-const PopoverAnchor = PopoverPrimitive.Anchor;
 
 const PopoverContent = React.forwardRef<
   React.ComponentRef<typeof PopoverPrimitive.Content>,
@@ -63,7 +62,6 @@ export {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverAnchor,
   Tooltip,
   TooltipTrigger,
   TooltipContent,

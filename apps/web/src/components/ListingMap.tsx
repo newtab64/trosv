@@ -53,11 +53,6 @@ export function makePinIcon(listing: Listing, selected: boolean): L.DivIcon {
   });
 }
 
-/* Recenter helper: not a hook consumer, so kept simple for external use. */
-function MapControllerCenterHint(): null {
-  return null;
-}
-
 // Ensure Leaflet is available globally for plugins
 if (typeof window !== "undefined" && !(window as unknown as { L?: typeof L }).L) {
   (window as unknown as { L: typeof L }).L = L;
@@ -237,6 +232,3 @@ export function ListingMap({
     />
   );
 }
-
-/* Re-exported hooks not used directly here; kept minimal for the page imports. */
-export { MapControllerCenterHint as MapController };

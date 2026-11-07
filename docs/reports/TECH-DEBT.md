@@ -1,3 +1,5 @@
+> **Superseded (2026-11-07).** The numbers below come from a pattern scanner that counted import blocks as duplicates. The measured audit and the elimination plan live in [`TECH-DEBT-AUDIT-2026-11.md`](TECH-DEBT-AUDIT-2026-11.md). Kept for history only.
+
 # Sổ theo dõi nợ kỹ thuật (Tech Debt Register)
 
 > **Baseline thiết lập mới: 2026-10-12**  

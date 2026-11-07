@@ -45,6 +45,22 @@ jobs:
       - name: PHPStan / Larastan (level max)
         run: ./vendor/bin/phpstan analyse --no-progress --memory-limit=1G --error-format=github
 
+      # Debt ratchet: the baseline may shrink, never grow. Compares with the target branch.
+      - name: PHPStan baseline must not grow
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          before="$(git show "origin/$BASE_REF:apps/api/phpstan-baseline.neon" | grep -c 'message:' || true)"
+          after="$(grep -c 'message:' apps/api/phpstan-baseline.neon || true)"
+          echo "baseline entries: $before -> $after"
+          if [ "$after" -gt "$before" ]; then
+            echo "::error::phpstan-baseline.neon grew ($before -> $after). Fix the new findings instead of baselining them."
+            exit 1
+          fi
+
       - name: Copy env for tests
         run: |
           cp .env.example .env

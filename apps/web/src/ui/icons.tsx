@@ -4,7 +4,6 @@ export {
   HousePlaceholder,
   FavoriteEmptyIllustration,
   SearchEmptyIllustration,
-  MessagesEmptyIllustration,
   AiUnavailableIllustration,
   NotFoundIllustration,
 } from "./illustrations";

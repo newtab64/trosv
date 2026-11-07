@@ -176,12 +176,16 @@ icons, react-router 7. UI copy is Vietnamese. `npm run build` runs `tsc` first.
   existing debt is frozen in `phpstan-baseline.neon`, so any NEW finding fails;
   shrink the baseline, never grow it), and PHPUnit configured to fail on
   warnings, notices, deprecations, risky tests and stray output.
+- Debt ratchets: `eslint.config.js` caps complexity (12) and function length (120)
+  for new code and freezes the files that already exceed them at today's worst value
+  (lower the number when you refactor, never raise it); a PR may not grow
+  `phpstan-baseline.neon`. The plan is in `docs/reports/TECH-DEBT-AUDIT-2026-11.md`.
 - AI service: Ruff (lint + format), mypy `--strict`, pytest with every warning
   turned into an error, `pip-audit`.
 - CI is zero-tolerance and split by area. `ci.yml` only decides what runs (path
   filters on PRs; pushes and the merge queue run everything) and gates the
   result; the work lives in reusable workflows `_api.yml` (Pint, PHPStan max,
-  PHPUnit, composer audit), `_web.yml` (ESLint, Prettier, tsc, a build that
+  PHPUnit, composer audit), `_web.yml` (ESLint, Prettier, tsc, knip dead-code check, a build that
   fails on warnings, `npm audit`), `_ai.yml` (Ruff, mypy, pytest, pip-audit),
   `_infra.yml` (actionlint, hadolint, shellcheck, `compose config`, image
   builds) and `_e2e.yml` (Playwright against the bundle `_web` built, shared as

@@ -24,6 +24,10 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
 
+      # Dead code gate: unused files, exports, types and dependencies fail the job.
+      - name: knip (dead code)
+        run: npm run knip
+
       # Zero-warning build: any Vite/Rollup warning fails the job, not just errors.
       - name: Build (warnings are errors)
         run: |

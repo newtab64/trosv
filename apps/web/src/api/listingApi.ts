@@ -7,7 +7,6 @@ import type {
   ListingPayload,
   ListingQuery,
   Review,
-  ReviewPayload,
   School,
   Ward,
   PaginationMeta,
@@ -39,10 +38,6 @@ export function getListingReviews(id: number, page = 1): Promise<Paged<Review>> 
     .get(`/listings/${id}/reviews`, { params: { page } })
     .then((r) => toPaged(pagedEnvelope<Review>(r)));
 }
-
-// API_CONTRACT §4 - "Đánh giá (sinh viên)"
-export const createReview = (listingId: number, payload: ReviewPayload): Promise<Review> =>
-  api.post(`/listings/${listingId}/reviews`, payload).then((r) => envelope<Review>(r).data);
 
 // API_CONTRACT §4 - "Dữ liệu tham chiếu"
 // Cascade: chọn Tỉnh/TP trước, rồi ward/trường lọc theo city_id (tùy chọn).

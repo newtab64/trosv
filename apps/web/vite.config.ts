@@ -10,9 +10,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Deps cache nam ngoai node_modules: thu muc .vite trong sandbox co
-  // file do root so huu khong the ghi/xoa -> Vite tra 404 cho moi route.
-  cacheDir: "/tmp/trosv-vite-cache",
+  // Optional: put the dependency cache outside node_modules (some sandboxes leave
+  // root-owned files in node_modules/.vite, which makes Vite 404 every route).
+  cacheDir: process.env["VITE_CACHE_DIR"],
   server: {
     proxy: {
       "/attachments": {
@@ -63,16 +63,5 @@ export default defineConfig({
   },
   esbuild: {
     legalComments: "inline",
-  },
-  minify: "terser",
-  terserOptions: {
-    compress: {
-      passes: 2,
-      drop_console: ["log", "debug", "info"],
-      drop_debugger: true,
-    },
-    format: {
-      comments: "some",
-    },
   },
 });

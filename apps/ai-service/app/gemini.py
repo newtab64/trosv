@@ -28,7 +28,6 @@ logger = logging.getLogger("ai_service.gemini")
 
 # Model configuration
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
 
 # Load domain knowledge base for RAG-lite chatbot grounding
 KNOWLEDGE_FILE = Path(__file__).parent / "knowledge.md"

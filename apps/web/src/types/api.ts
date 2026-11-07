@@ -221,20 +221,9 @@ export interface MessagePayload {
   body: string;
 }
 
-export interface Favorite {
-  id: number;
-  listing_id: number;
-  listing?: Listing;
-}
-
 export interface AuthResponse {
   token: string;
   user: User;
-}
-
-export interface ApiError {
-  message: string;
-  errors?: Record<string, string[]>;
 }
 
 export interface PaginationMeta {
@@ -257,11 +246,6 @@ export interface RegisterPayload {
   /** Backend validator chap nhan string - UI gui "student"|"landlord"|. */
   role?: string;
   [k: string]: unknown;
-}
-
-export interface ReviewPayload {
-  rating: number;
-  comment?: string;
 }
 
 // ---- AI (API_CONTRACT §4 - response shape tu AI service, loose) ----
