@@ -15,7 +15,6 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 const LIMITS = { complexity: 12, lines: 120 };
 const DEBT = {
   "src/components/AiChatWidget.tsx": { complexity: 12, lines: 158 },
-  "src/components/ListingCard.tsx": { complexity: 14, lines: 170 },
   "src/components/ListingMap.tsx": { complexity: 12, lines: 149 },
   "src/components/shell.tsx": { complexity: 12, lines: 153 },
   "src/hooks/useListingForm.ts": { complexity: 12, lines: 128 },
@@ -26,7 +25,6 @@ const DEBT = {
   "src/pages/Register.tsx": { complexity: 12, lines: 154 },
   "src/pages/messages/MessageBubble.tsx": { complexity: 14, lines: 120 },
   "src/pages/messages/thread/threadLayout.ts": { complexity: 15, lines: 120 },
-  "src/pages/profile/ProfileHabitsCard.tsx": { complexity: 12, lines: 170 },
   "src/pages/room/RoomContactCard.tsx": { complexity: 16, lines: 120 },
   "src/ui/illustrations.tsx": { complexity: 12, lines: 161 },
 };
