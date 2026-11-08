@@ -189,7 +189,8 @@ effectively self-review. Process debt, not code.
   - `RoomPreviewCard` 216 / 31 -> skeleton, link fallback, react button, `useRoomPreview` + pure `roomPreview.ts`; `ConversationListItem` cc 20 -> `describeConversation` + badge/chip components.
   - `LandlordForm` 370 -> `landlord-form/` sections (basics, location, description, photos); `useListingForm` 190 -> 128 with a pure `listingFormModel.ts`; `useListingSearch` 176 -> pure `searchFilters.ts` (URL round trip, API params, city/ward cascade); `AiAreaSuggestions` 185 -> `ai-areas/` (form, results, card, hook).
   - Bugs found by the refactor and fixed: the landlord form's map was recreated on every keystroke (the marker you placed vanished; now covered by e2e), and `useListingForm` returned two dead members (`applyAddressGuess`, `wardCenter`) which were removed.
-  - New e2e safety net for the landlord form (read-only). 366 unit tests. What is still in the ratchet is listed in `eslint.config.js` (16 files, mostly smaller or already-under-1.5x-limit components).
+  - New e2e safety net for the landlord form (read-only).
+  - Remaining-list batch: `LandlordDashboard` 235 -> rows, status table, delete dialog, `useMyListings` (+ e2e); `ProfileHabitsCard` 170 -> `OptionSelect`, `CleanlinessSlider`, `SwitchRow`, `HobbySummary`; `ListingCard` 170 / 14 -> `CardPhoto`, `FavoriteButton`, `DistanceBadge`, `useCardFavorite`. 13 files left in the ratchet (`eslint.config.js`). 366 unit tests. 
 
 ## Elimination plan
 

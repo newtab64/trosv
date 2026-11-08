@@ -15,19 +15,16 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 const LIMITS = { complexity: 12, lines: 120 };
 const DEBT = {
   "src/components/AiChatWidget.tsx": { complexity: 12, lines: 158 },
-  "src/components/ListingCard.tsx": { complexity: 14, lines: 170 },
   "src/components/ListingMap.tsx": { complexity: 12, lines: 149 },
   "src/components/shell.tsx": { complexity: 12, lines: 153 },
   "src/hooks/useListingForm.ts": { complexity: 12, lines: 128 },
   "src/pages/AiRoommates.tsx": { complexity: 12, lines: 143 },
   "src/pages/ConversationDetail.tsx": { complexity: 19, lines: 155 },
   "src/pages/Favorites.tsx": { complexity: 12, lines: 141 },
-  "src/pages/LandlordDashboard.tsx": { complexity: 12, lines: 235 },
   "src/pages/MessagesList.tsx": { complexity: 12, lines: 168 },
   "src/pages/Register.tsx": { complexity: 12, lines: 154 },
   "src/pages/messages/MessageBubble.tsx": { complexity: 14, lines: 120 },
   "src/pages/messages/thread/threadLayout.ts": { complexity: 15, lines: 120 },
-  "src/pages/profile/ProfileHabitsCard.tsx": { complexity: 12, lines: 170 },
   "src/pages/room/RoomContactCard.tsx": { complexity: 16, lines: 120 },
   "src/ui/illustrations.tsx": { complexity: 12, lines: 161 },
 };
