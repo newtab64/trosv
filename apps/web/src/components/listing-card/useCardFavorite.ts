@@ -63,5 +63,12 @@ export function useCardFavorite(listing: Listing, onFavToggle?: (l: Listing) => 
     }
   }
 
-  return { isFavorite, pop, endPop: () => { setPop(false); }, onHeartClick };
+  return {
+    isFavorite,
+    pop,
+    endPop: () => {
+      setPop(false);
+    },
+    onHeartClick,
+  };
 }
