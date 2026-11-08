@@ -22,7 +22,6 @@ const DEBT = {
   "src/pages/AiRoommates.tsx": { complexity: 12, lines: 143 },
   "src/pages/ConversationDetail.tsx": { complexity: 19, lines: 155 },
   "src/pages/Favorites.tsx": { complexity: 12, lines: 141 },
-  "src/pages/LandlordDashboard.tsx": { complexity: 12, lines: 235 },
   "src/pages/MessagesList.tsx": { complexity: 12, lines: 168 },
   "src/pages/Register.tsx": { complexity: 12, lines: 154 },
   "src/pages/messages/MessageBubble.tsx": { complexity: 14, lines: 120 },
