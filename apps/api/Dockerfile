@@ -1,7 +1,7 @@
 # ============================================================
 # TROSV backend - PHP 8.3 CLI, Debian 13 "trixie" (latest stable).
 # ============================================================
-FROM php:8.3-cli-trixie
+FROM php:8.5-cli-trixie
 
 # libpng/jpeg/freetype are required for the GD extension (seeder sample images).
 # pcntl is required by Laravel Reverb (SIGINT/SIGTERM constants + signal
