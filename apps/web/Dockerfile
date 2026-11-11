@@ -13,7 +13,7 @@
 
 # ---- Build stage ----------------------------------------------------------
 # Node 22 = LTS dang duoc support (Node 20 het EOL 4/2026).
-FROM node:22-trixie AS build
+FROM node:26-trixie AS build
 
 # Declared so compose build args actually reach `npm run build`. Docker
 # silently drops undeclared args, which would bake the localhost fallbacks
@@ -34,7 +34,7 @@ COPY . .
 RUN npm run build
 
 # ---- Runtime stage: nginx serving the SPA ---------------------------------
-FROM nginx:1.29-trixie
+FROM nginx:1.31-trixie
 
 # Healthcheck dung curl (nginx Debian khong kem wget nhu alpine).
 RUN apt-get update \
