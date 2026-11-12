@@ -20,7 +20,7 @@ jobs:
       COMPOSE_PROJECT_NAME: trosv-ci
       REVERB_APP_KEY: ci-key
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Same required variables a real server provides in .env (see docker-compose.yml header).
       - name: Compose environment

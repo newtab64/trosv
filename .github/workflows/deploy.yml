@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: stable
           fetch-depth: 1
@@ -63,7 +63,7 @@ jobs:
 
       - name: Deploy over SSH (docker compose)
         # action-pinned per repo policy (audit run 3): mutable tags are forbidden.
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         if: steps.gate.outputs.match == 'true' && steps.secrets.outputs.configured == 'true'
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -85,7 +85,7 @@ jobs:
             docker compose ps
 
       - name: Post-deploy smoke
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         if: steps.gate.outputs.match == 'true' && steps.secrets.outputs.configured == 'true'
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -114,7 +114,7 @@ jobs:
       # If the new version did not come up healthy, put the previous one back and
       # keep the job red so the failure is not missed.
       - name: Roll back to the previous version
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         if: failure() && steps.gate.outputs.match == 'true' && steps.secrets.outputs.configured == 'true'
         with:
           host: ${{ secrets.DEPLOY_HOST }}
