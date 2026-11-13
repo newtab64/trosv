@@ -7,6 +7,38 @@ import { CoordinatePicker } from "./CoordinatePicker";
 import { SECTION, SELECT } from "./styles";
 import type { ListingFormApi } from "./types";
 
+/** The two number fields behind "Nhập tọa độ thủ công". */
+function ManualCoordinates({ form: f }: { form: ListingFormApi }) {
+  const err = (field: string): string | undefined => f.errors[field]?.[0];
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field id="lf-lat" label="Vĩ độ" error={err("latitude")} required>
+        <Input
+          id="lf-lat"
+          type="number"
+          step="any"
+          value={String(f.form.latitude)}
+          onChange={f.set("latitude")}
+          className="tabular-nums"
+        />
+      </Field>
+      <Field id="lf-lng" label="Kinh độ" error={err("longitude")} required>
+        <Input
+          id="lf-lng"
+          type="number"
+          step="any"
+          value={String(f.form.longitude)}
+          onChange={f.set("longitude")}
+          className="tabular-nums"
+        />
+      </Field>
+    </div>
+  );
+}
+
+/** A coordinate with at most 5 decimals (about a metre), without trailing zeros. */
+const shortCoord = (v: number | string): string => String(Number(Number(v).toFixed(5)));
+
 /** Step 1: find the address, check the pin on the map, and fix the city, ward and address line. */
 export function LocationStep({ form: f }: { form: ListingFormApi }) {
   const [manual, setManual] = useState(false);
@@ -92,7 +124,9 @@ export function LocationStep({ form: f }: { form: ListingFormApi }) {
 
       <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
         <span className="tabular-nums">
-          {hasPin ? `${String(f.form.latitude)}, ${String(f.form.longitude)}` : "Chưa chọn vị trí"}
+          {hasPin
+            ? `${shortCoord(f.form.latitude)}, ${shortCoord(f.form.longitude)}`
+            : "Chưa chọn vị trí"}
         </span>
         <span aria-hidden>·</span>
         <button
@@ -105,30 +139,7 @@ export function LocationStep({ form: f }: { form: ListingFormApi }) {
           Nhập tọa độ thủ công
         </button>
       </div>
-      {manual ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="lf-lat" label="Vĩ độ" error={err("latitude")} required>
-            <Input
-              id="lf-lat"
-              type="number"
-              step="any"
-              value={String(f.form.latitude)}
-              onChange={f.set("latitude")}
-              className="tabular-nums"
-            />
-          </Field>
-          <Field id="lf-lng" label="Kinh độ" error={err("longitude")} required>
-            <Input
-              id="lf-lng"
-              type="number"
-              step="any"
-              value={String(f.form.longitude)}
-              onChange={f.set("longitude")}
-              className="tabular-nums"
-            />
-          </Field>
-        </div>
-      ) : null}
+      {manual ? <ManualCoordinates form={f} /> : null}
     </section>
   );
 }
