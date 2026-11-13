@@ -136,7 +136,7 @@ Với bản đồ, Frontend gọi `GET /listings` với cùng bộ lọc và `pe
 | `POST /listings` | Landlord | `title` (5-200 ký tự), `type`, `price` (100000-100000000), `area_m2` (5-1000), `address`, `latitude`, `longitude`, `ward_id`, `description` (tùy chọn), `amenity_ids[]` (tùy chọn) | 201 `data: Listing (chi tiết)` |
 | `PUT /listings/{id}` | Owner | Các trường như trên (đều tùy chọn) và thêm `status` | `data: Listing (chi tiết)` |
 | `DELETE /listings/{id}` | Owner | | `data: null`. Xóa tin kèm xóa file ảnh trên disk một cách an toàn |
-| `POST /listings/{id}/images` | Owner | `multipart`: `images[]` (jpg/png/webp, tối đa 2 MB mỗi ảnh, tối đa 5 ảnh mỗi tin tính tổng) | `data: [{ id, url }]` (toàn bộ ảnh của tin). Ảnh đầu tiên là ảnh bìa. Xử lý atomic (database transaction kèm tự động dọn dẹp file disk nếu lỗi) |
+| `POST /listings/{id}/images` | Owner | `multipart`: `images[]` (jpg/png/webp, tối đa 5 MB mỗi ảnh, tối đa 5 ảnh mỗi tin tính tổng) | `data: [{ id, url }]` (toàn bộ ảnh của tin). Ảnh đầu tiên là ảnh bìa. Xử lý atomic (database transaction kèm tự động dọn dẹp file disk nếu lỗi) |
 | `DELETE /listings/{id}/images/{image_id}` | Owner | | `data: null` |
 
 ### Yêu thích (sinh viên)

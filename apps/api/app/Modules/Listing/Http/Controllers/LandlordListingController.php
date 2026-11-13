@@ -114,7 +114,7 @@ class LandlordListingController extends Controller
 
     /**
      * POST /api/listings/{id}/images - upload 1..n images (jpg/png/webp,
-     * 2 MB each, 5 total per listing). Returns ALL images of the listing;
+     * 5 MB each, 5 total per listing). Returns ALL images of the listing;
      * the smallest id is the cover.
      */
     public function uploadImages(ListingImageUploadRequest $request, Listing $listing): JsonResponse

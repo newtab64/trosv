@@ -57,7 +57,7 @@ Tài khoản demo (mật khẩu `password`):
 ## Ghi chú kỹ thuật
 
 - `role` **không** nằm trong `$fillable` - chỉ được đặt khi tạo qua `register`/factory (`forceCreate`). Không endpoint nào đổi vai trò được.
-- Ảnh tin đăng: public disk `storage/app/public/listings`, tối đa 5 ảnh/tin, jpg/png/webp ≤ 2MB, xử lý atomic với rollback disk cleanup khi lỗi.
+- Ảnh tin đăng: public disk `storage/app/public/listings`, tối đa 5 ảnh/tin, jpg/png/webp ≤ 5MB, xử lý atomic với rollback disk cleanup khi lỗi.
 - Tệp nhắn tin: **private** disk, chỉ mở qua signed URL 60 phút (không cần token, mở thẳng trong tab), tên file được khử nhiễm chống header injection.
 - `Model::preventLazyLoading(!isProduction())` - N+1 sẽ ném exception trong dev/test.
 - Rate limiting: 10 req/phút cho login/register (theo IP) và các endpoint AI (theo User ID cho người dùng đăng nhập). Mọi request guest thiếu `Accept: application/json` vẫn nhận JSON 401 (không redirect).

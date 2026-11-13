@@ -340,10 +340,44 @@ class LandlordListingTest extends TestCase
 
         $this->actingAs($this->landlord, 'sanctum')
             ->postJson("/api/listings/{$listing->id}/images", [
-                'images' => [UploadedFile::fake()->create('big.jpg', 3000, 'image/jpeg')], // 3 MB > 2 MB
+                'images' => [UploadedFile::fake()->create('big.jpg', 5200, 'image/jpeg')], // 5.2 MB > 5 MB
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['images.0']);
+    }
+
+    public function test_image_up_to_5mb_is_accepted(): void
+    {
+        $listing = $this->makeOwnedListing();
+
+        $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/listings/{$listing->id}/images", [
+                'images' => [UploadedFile::fake()->create('ok.jpg', 4500, 'image/jpeg')],
+            ])
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_uploaded_images_keep_request_order(): void
+    {
+        $listing = $this->makeOwnedListing();
+
+        $ids = $this->actingAs($this->landlord, 'sanctum')
+            ->postJson("/api/listings/{$listing->id}/images", [
+                'images' => [
+                    UploadedFile::fake()->create('a.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('b.jpg', 100, 'image/jpeg'),
+                    UploadedFile::fake()->create('c.jpg', 100, 'image/jpeg'),
+                ],
+            ])
+            ->assertOk()
+            ->json('data.*.id');
+
+        $this->assertCount(3, $ids);
+        $sorted = $ids;
+        sort($sorted);
+        $this->assertSame($sorted, $ids, 'first uploaded file must get the smallest id (the cover)');
+        $this->assertSame($listing->images()->orderBy('id')->first()->id, $ids[0]);
     }
 
     public function test_student_cannot_upload_images(): void

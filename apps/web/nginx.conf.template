@@ -52,9 +52,9 @@ server {
     set $backend_upstream http://backend:8000;
 
     location ~ ^/(api|storage|attachments|broadcasting)(/|$) {
-        # Uploads: 5 anh x 2MB (tin dang) hoac tep tin nhan 5MB. Mac dinh cua
+        # Uploads: 5 anh x 5MB (tin dang) hoac tep tin nhan 5MB. Mac dinh cua
         # nginx la 1MB => 413 truoc khi toi API. Khop request_body cua backend.
-        client_max_body_size 16m;
+        client_max_body_size 26m;
         proxy_pass $backend_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
