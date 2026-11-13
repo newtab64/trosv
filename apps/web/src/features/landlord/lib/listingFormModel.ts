@@ -93,9 +93,56 @@ export function buildDescriptionRequest(form: ListingFormState) {
   };
 }
 
-/** Message if picking `picked` more photos would break the limit, else null. */
-export function photoLimitError(isEdit: boolean, existing: number, picked: number): string | null {
-  if (isEdit && existing + picked > MAX_PHOTOS) return "Tin đăng chỉ có tối đa 5 ảnh.";
-  if (!isEdit && picked > MAX_PHOTOS) return "Tối đa 5 ảnh mỗi tin.";
-  return null;
+/** Biggest photo the API accepts (matches `max:5120` in ListingImageUploadRequest). */
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+export const PHOTO_TYPES: readonly string[] = ["image/jpeg", "image/png", "image/webp"];
+
+export interface MergeResult {
+  /** The whole new set: the current photos plus the ones that were accepted. */
+  files: File[];
+  /** One sentence per skipped file, plus one if the limit trimmed the pick. */
+  notices: string[];
+  /** How many of the incoming files were accepted. */
+  added: number;
+}
+
+const sameFile = (a: File, b: File): boolean =>
+  a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+
+const megabytes = (bytes: number): string => (bytes / (1024 * 1024)).toFixed(1).replace(".", ",");
+
+/**
+ * Adds a pick to the photos already chosen. Duplicates are ignored quietly, files that are
+ * not images or are too big are skipped one by one, and whatever does not fit under the
+ * 5-photo limit (counting `existingCount` photos already on the listing) is dropped.
+ */
+export function mergePhotos(existingCount: number, current: File[], incoming: File[]): MergeResult {
+  const notices: string[] = [];
+  const accepted: File[] = [];
+  for (const file of incoming) {
+    if ([...current, ...accepted].some((f) => sameFile(f, file))) continue;
+    if (!PHOTO_TYPES.includes(file.type)) {
+      notices.push(`“${file.name}” không phải JPG, PNG hoặc WebP.`);
+    } else if (file.size > MAX_PHOTO_BYTES) {
+      notices.push(`“${file.name}” nặng ${megabytes(file.size)} MB, vượt 5 MB nên đã bị bỏ qua.`);
+    } else {
+      accepted.push(file);
+    }
+  }
+  const room = Math.max(0, MAX_PHOTOS - existingCount - current.length);
+  const kept = accepted.slice(0, room);
+  if (accepted.length > 0 && room === 0) {
+    notices.push("Tin đăng đã đủ 5 ảnh.");
+  } else if (kept.length < accepted.length) {
+    notices.push(
+      `Chỉ còn chỗ cho ${String(room)} ảnh, đã bỏ ${String(accepted.length - kept.length)} ảnh cuối.`,
+    );
+  }
+  return { files: [...current, ...kept], notices, added: kept.length };
+}
+
+/** The same photos with the one at `index` first (the first photo is the cover). */
+export function movePhotoToFront(files: File[], index: number): File[] {
+  if (index <= 0 || index >= files.length) return files;
+  return [files[index] as File, ...files.slice(0, index), ...files.slice(index + 1)];
 }

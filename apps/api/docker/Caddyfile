@@ -26,9 +26,9 @@
 
 	header -Server
 
-	# Upload lon nhat: 5 anh x 2MB (tin dang) hoac 5MB (tep tin nhan) + overhead multipart.
+	# Upload lon nhat: 5 anh x 5MB (tin dang) hoac 5MB (tep tin nhan) + overhead multipart.
 	request_body {
-		max_size 16MB
+		max_size 26MiB
 	}
 
 	log {

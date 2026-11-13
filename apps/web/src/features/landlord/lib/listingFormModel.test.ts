@@ -3,10 +3,11 @@ import type { Listing } from "@/shared/types/api";
 import {
   EMPTY_FORM,
   MAX_PHOTOS,
+  mergePhotos,
+  movePhotoToFront,
   buildDescriptionRequest,
   buildListingPayload,
   formFromListing,
-  photoLimitError,
 } from "./listingFormModel";
 
 const FILLED = {
@@ -117,14 +118,74 @@ describe("buildDescriptionRequest", () => {
   });
 });
 
-describe("photoLimitError", () => {
-  it("allows up to the limit when creating", () => {
-    expect(photoLimitError(false, 0, MAX_PHOTOS)).toBeNull();
-    expect(photoLimitError(false, 0, MAX_PHOTOS + 1)).toBe("Tối đa 5 ảnh mỗi tin.");
+const MB = 1024 * 1024;
+const photo = (name: string, size = 1000, type = "image/png", lastModified = 1): File => {
+  const f = new File(["x"], name, { type, lastModified });
+  Object.defineProperty(f, "size", { value: size });
+  return f;
+};
+
+describe("mergePhotos", () => {
+  it("appends the incoming photos after the current ones", () => {
+    const a = photo("a.png");
+    const b = photo("b.png");
+    const r = mergePhotos(0, [a], [b]);
+    expect(r.files).toEqual([a, b]);
+    expect(r.added).toBe(1);
+    expect(r.notices).toEqual([]);
   });
 
-  it("counts the photos already on the listing when editing", () => {
-    expect(photoLimitError(true, 3, 2)).toBeNull();
-    expect(photoLimitError(true, 3, 3)).toBe("Tin đăng chỉ có tối đa 5 ảnh.");
+  it("ignores a duplicate (same name, size and last modified) without a notice", () => {
+    const a = photo("a.png");
+    const r = mergePhotos(0, [a], [photo("a.png")]);
+    expect(r.files).toEqual([a]);
+    expect(r.added).toBe(0);
+    expect(r.notices).toEqual([]);
+  });
+
+  it("skips a file that is not JPG, PNG or WebP and says so", () => {
+    const r = mergePhotos(0, [], [photo("doc.pdf", 100, "application/pdf")]);
+    expect(r.files).toEqual([]);
+    expect(r.notices).toEqual(["“doc.pdf” không phải JPG, PNG hoặc WebP."]);
+  });
+
+  it("skips a file over 5 MB but keeps the valid ones in the same pick", () => {
+    const ok = photo("ok.jpg", 1 * MB, "image/jpeg");
+    const big = photo("lon.jpg", 6.4 * MB, "image/jpeg");
+    const r = mergePhotos(0, [], [big, ok]);
+    expect(r.files).toEqual([ok]);
+    expect(r.notices).toEqual(["“lon.jpg” nặng 6,4 MB, vượt 5 MB nên đã bị bỏ qua."]);
+  });
+
+  it("accepts a file of exactly 5 MB", () => {
+    const edge = photo("edge.webp", 5 * MB, "image/webp");
+    expect(mergePhotos(0, [], [edge]).files).toEqual([edge]);
+  });
+
+  it("keeps only what fits when the listing already has photos", () => {
+    const four = [1, 2, 3, 4].map((n) => photo(`${String(n)}.png`));
+    const r = mergePhotos(3, [], four);
+    expect(r.files).toEqual(four.slice(0, 2));
+    expect(r.notices).toEqual(["Chỉ còn chỗ cho 2 ảnh, đã bỏ 2 ảnh cuối."]);
+  });
+
+  it("refuses everything when the listing is already full", () => {
+    const r = mergePhotos(MAX_PHOTOS, [], [photo("a.png")]);
+    expect(r.files).toEqual([]);
+    expect(r.added).toBe(0);
+    expect(r.notices).toEqual(["Tin đăng đã đủ 5 ảnh."]);
+  });
+});
+
+describe("movePhotoToFront", () => {
+  const [a, b, c] = [photo("a.png"), photo("b.png"), photo("c.png")] as [File, File, File];
+
+  it("moves the chosen photo to index 0", () => {
+    expect(movePhotoToFront([a, b, c], 2)).toEqual([c, a, b]);
+  });
+
+  it("keeps the order for index 0 or an index out of range", () => {
+    expect(movePhotoToFront([a, b, c], 0)).toEqual([a, b, c]);
+    expect(movePhotoToFront([a, b, c], 9)).toEqual([a, b, c]);
   });
 });

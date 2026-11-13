@@ -73,3 +73,6 @@ backups/
 test-results/
 playwright-report/
 .deploy-previous-sha
+
+# superpowers brainstorm/ledger scratch
+.superpowers/

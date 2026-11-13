@@ -175,7 +175,7 @@ Restore drill + quy trình: `infra/backup/RESTORE.md`. Rollback code:
   Chạy một lần rồi `up -d backend`:
   `docker compose run --rm --no-deps --user root --entrypoint chown backend -R www-data:www-data /var/www/html/storage/app`.
   Backend cố ý từ chối khởi động thay vì để upload "thành công" nhưng mất file.
-- **Upload > 1 MB trả 413** - giới hạn nằm ở nginx (`client_max_body_size 16m` trong
-  `apps/web/nginx.conf.template`) và backend (`request_body max_size 16MB` trong
+- **Upload > 1 MB trả 413** - giới hạn nằm ở nginx (`client_max_body_size 26m` trong
+  `apps/web/nginx.conf.template`) và backend (`request_body max_size 26MiB` trong
   `apps/api/docker/Caddyfile`, `post_max_size` trong `apps/api/docker/php.ini`).
-  Đổi cả ba cùng lúc, và khớp tầng validate (ảnh 2 MB, tệp chat 5 MB).
+  Đổi cả ba cùng lúc, và khớp tầng validate (ảnh 5 MB, tệp chat 5 MB; 5 ảnh x 5 MB = 25 MB nên giới hạn thân request là 26 MB).

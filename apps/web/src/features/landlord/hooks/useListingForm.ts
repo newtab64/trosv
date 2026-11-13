@@ -19,9 +19,10 @@ import {
   buildDescriptionRequest,
   buildListingPayload,
   formFromListing,
-  photoLimitError,
   type ListingFormState,
 } from "../lib/listingFormModel";
+import { useLocationFill } from "./useLocationFill";
+import { usePhotoPicker } from "./usePhotoPicker";
 
 /** Toast interface du can cua hook - khong toan bo toast context. */
 export interface ToastLike {
@@ -72,8 +73,10 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   const { data: amenities } = useAmenities();
   const [form, setForm] = useState<ListingFormState>({ ...EMPTY_FORM });
   const [images, setImages] = useState<ListingImage[]>([]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const photos = usePhotoPicker(isEdit ? images.length : 0);
+  const { newFiles } = photos;
+  const location = useLocationFill({ cities, wards, setForm });
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -95,6 +98,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
 
   const setField = (key: keyof ListingFormState, value: string): void => {
     setErrors({});
+    if (key === "address" || key === "city_id" || key === "ward_id") location.clearAutofilled();
     setForm((f) => ({ ...f, [key]: value }));
   };
 
@@ -108,13 +112,19 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   /** Choosing another city clears the ward, so the two never disagree. */
   const changeCity = (cityId: string): void => {
     setErrors({});
+    location.clearAutofilled();
     setForm((f) => ({ ...f, city_id: cityId, ward_id: "" }));
   };
 
   /** Stable on purpose: the map effect depends on it and must not restart. */
-  const setCoordinates = useCallback((latitude: number, longitude: number): void => {
-    setForm((f) => ({ ...f, latitude, longitude }));
-  }, []);
+  const { cancelLocate } = location;
+  const setCoordinates = useCallback(
+    (latitude: number, longitude: number): void => {
+      cancelLocate();
+      setForm((f) => ({ ...f, latitude, longitude }));
+    },
+    [cancelLocate],
+  );
 
   function toggleAmenity(amenityId: number): void {
     setForm((f) => ({ ...f, amenity_ids: toggleId(f.amenity_ids, amenityId) }));
@@ -163,22 +173,6 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     }
   }
 
-  /** Accepts the picked photos, or explains why not. Returns whether they were accepted. */
-  function pickFiles(files: File[]): boolean {
-    const limitError = photoLimitError(isEdit, images.length, files.length);
-    if (limitError) {
-      setNotice(limitError);
-      return false;
-    }
-    setNotice("");
-    setNewFiles(files);
-    return true;
-  }
-
-  function handleFilePick(e: ChangeEvent<HTMLInputElement>): void {
-    if (!pickFiles(Array.from(e.target.files || []))) e.target.value = "";
-  }
-
   return {
     isEdit,
     wards,
@@ -189,9 +183,10 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     setField,
     changeCity,
     setCoordinates,
-    pickFiles,
+    ...photos,
+    ...location,
+    setErrors,
     images,
-    newFiles,
     errors,
     busy,
     aiBusy,
@@ -200,6 +195,5 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     generateDescription,
     handleSubmit,
     handleDeleteImage,
-    handleFilePick,
   };
 }
