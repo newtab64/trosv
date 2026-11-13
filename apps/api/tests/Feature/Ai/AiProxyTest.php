@@ -469,7 +469,7 @@ class AiProxyTest extends TestCase
             ->postJson('/api/ai/chat', [
                 'message' => 'hi',
                 'history' => [
-                    ['role' => 'user', 'content' => str_repeat('A', 10001)],
+                    ['role' => 'user', 'content' => str_repeat('A', 2001)],
                 ],
             ])
             ->assertStatus(422)
@@ -480,14 +480,14 @@ class AiProxyTest extends TestCase
 
     public function test_chat_accepts_reasonable_history_content(): void
     {
-        // Boundary: 10,000 chars per turn is allowed.
+        // Boundary: 2,000 chars per turn is allowed.
         Http::fake(['*/chat' => Http::response(['reply' => 'ok'])]);
 
         $this->actingAs($this->landlord, 'sanctum')
             ->postJson('/api/ai/chat', [
                 'message' => 'hi',
                 'history' => [
-                    ['role' => 'user', 'content' => str_repeat('A', 10000)],
+                    ['role' => 'user', 'content' => str_repeat('A', 2000)],
                 ],
             ])
             ->assertOk();

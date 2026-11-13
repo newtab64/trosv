@@ -114,12 +114,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            // 503/403-style aborts thrown by controllers keep their code and status text.
+            // aborts thrown by controllers keep their code and status text.
             if ($e instanceof HttpException) {
-                if ($e->getStatusCode() === 503) {
-                    return new JsonResponse(['message' => 'Dịch vụ AI tạm thời không khả dụng.'], 503);
-                }
-
                 return new JsonResponse(['message' => $e->getMessage() ?: 'Lỗi máy chủ.'], $e->getStatusCode());
             }
 
