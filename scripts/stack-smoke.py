@@ -263,13 +263,14 @@ def check_attachments(student: str, conversation_id: int) -> None:
     status, _, _ = request("POST", f"{WEB}/api/conversations/{conversation_id}/messages", headers, body)
     check("6 MB attachment is a 422, not a 500", status == 422, str(status))
 
-    huge = b"x" * (17 * MB)
+    # Over the 26 MiB body limit (5 photos x 5 MiB must fit; see nginx, Caddy and php.ini).
+    huge = b"x" * (28 * MB)
     headers, body = multipart({"body": "file"}, [("file", "huge.pdf", "application/pdf", huge)], student)
     try:
         status = request("POST", f"{API}/api/conversations/{conversation_id}/messages", headers, body)[0]
     except OSError as err:  # the server may close the connection while we are still sending
         status = f"connection closed ({type(err).__name__})"
-    check("17 MB body is refused by the server", status in (400, 413) or str(status).startswith("connection closed"), str(status))
+    check("28 MB body is refused by the server", status in (400, 413) or str(status).startswith("connection closed"), str(status))
 
 
 def check_realtime(student: str, conversation_id: int) -> None:
