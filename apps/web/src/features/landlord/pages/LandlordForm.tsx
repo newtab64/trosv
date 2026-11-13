@@ -9,7 +9,7 @@ import { toast } from "@/shared/ui/toast";
 import { BasicsSection } from "../components/landlord-form/BasicsSection";
 import { DescriptionSection } from "../components/landlord-form/DescriptionSection";
 import { LocationSection } from "../components/landlord-form/LocationSection";
-import { ExistingPhotos, PhotoDropzone } from "../components/landlord-form/PhotoSections";
+import { PhotosStep } from "../components/landlord-form/PhotosStep";
 
 const toastLike = {
   success: (m: string) => toast(m),
@@ -67,8 +67,7 @@ export default function LandlordForm() {
           <BasicsSection form={form} />
           <LocationSection form={form} />
           <DescriptionSection form={form} />
-          <ExistingPhotos form={form} />
-          <PhotoDropzone form={form} />
+          <PhotosStep form={form} />
 
           <div className="flex flex-wrap justify-end gap-3">
             <Button type="button" variant="ghost" onClick={cancel}>

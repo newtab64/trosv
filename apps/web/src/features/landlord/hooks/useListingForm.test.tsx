@@ -378,13 +378,13 @@ describe("useListingForm: submitting an edit", () => {
   });
 });
 
-describe("useListingForm: photos", () => {
-  const pic = (name: string, size = 1000) => {
-    const f = new File(["x"], name, { type: "image/png", lastModified: 1 });
-    Object.defineProperty(f, "size", { value: size });
-    return f;
-  };
+const pic = (name: string, size = 1000) => {
+  const f = new File(["x"], name, { type: "image/png", lastModified: 1 });
+  Object.defineProperty(f, "size", { value: size });
+  return f;
+};
 
+describe("useListingForm: picking photos", () => {
   it("adds each pick to the earlier ones instead of replacing them", () => {
     const { result } = mount();
     const [a, b] = [pic("a.png"), pic("b.png")] as [File, File];
@@ -446,7 +446,9 @@ describe("useListingForm: photos", () => {
     expect(result.current.newFiles).toHaveLength(3);
     expect(result.current.photoNotices).toEqual(["Chỉ còn chỗ cho 3 ảnh, đã bỏ 1 ảnh cuối."]);
   });
+});
 
+describe("useListingForm: photos", () => {
   it("removes one new photo by index", () => {
     const { result } = mount();
     const [a, b, c] = [pic("a.png"), pic("b.png"), pic("c.png")] as [File, File, File];

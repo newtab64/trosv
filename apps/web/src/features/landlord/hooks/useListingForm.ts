@@ -19,10 +19,9 @@ import {
   buildDescriptionRequest,
   buildListingPayload,
   formFromListing,
-  mergePhotos,
-  movePhotoToFront,
   type ListingFormState,
 } from "../lib/listingFormModel";
+import { usePhotoPicker } from "./usePhotoPicker";
 
 /** Toast interface du can cua hook - khong toan bo toast context. */
 export interface ToastLike {
@@ -73,12 +72,12 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   const { data: amenities } = useAmenities();
   const [form, setForm] = useState<ListingFormState>({ ...EMPTY_FORM });
   const [images, setImages] = useState<ListingImage[]>([]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const photos = usePhotoPicker(isEdit ? images.length : 0);
+  const { newFiles } = photos;
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [photoNotices, setPhotoNotices] = useState<string[]>([]);
   // Id of the listing this form already created. If the photo upload that follows the
   // create fails, pressing save again must finish the job, not create a second listing.
   const createdId = useRef<number | null>(null);
@@ -165,33 +164,6 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     }
   }
 
-  /**
-   * Adds the picked photos to the ones already chosen. Skipped files and trimmed picks are
-   * explained in `photoNotices`. Returns whether at least one photo was added.
-   */
-  function pickFiles(files: File[]): boolean {
-    const result = mergePhotos(isEdit ? images.length : 0, newFiles, files);
-    setPhotoNotices(result.notices);
-    setNewFiles(result.files);
-    return result.added > 0;
-  }
-
-  /** The input is cleared every time so choosing the same file again fires `change`. */
-  function handleFilePick(e: ChangeEvent<HTMLInputElement>): void {
-    pickFiles(Array.from(e.target.files || []));
-    e.target.value = "";
-  }
-
-  function removeNewFile(index: number): void {
-    setPhotoNotices([]);
-    setNewFiles((files) => files.filter((_, i) => i !== index));
-  }
-
-  /** The first new photo becomes the cover once uploaded. */
-  function makeCover(index: number): void {
-    setNewFiles((files) => movePhotoToFront(files, index));
-  }
-
   return {
     isEdit,
     wards,
@@ -202,13 +174,9 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     setField,
     changeCity,
     setCoordinates,
-    pickFiles,
-    removeNewFile,
-    makeCover,
-    photoNotices,
+    ...photos,
     setErrors,
     images,
-    newFiles,
     errors,
     busy,
     aiBusy,
@@ -217,6 +185,5 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     generateDescription,
     handleSubmit,
     handleDeleteImage,
-    handleFilePick,
   };
 }
