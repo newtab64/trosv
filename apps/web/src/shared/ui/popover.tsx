@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/shared/lib/utils";
 
 /* Popover: floating surfaces (with menus and dialogs) are the only ones that get a shadow. */
@@ -28,42 +27,4 @@ const PopoverContent = React.forwardRef<
 ));
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
-/* Tooltip */
-const TooltipProvider = ({
-  delayDuration = 200,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) => (
-  <TooltipPrimitive.Provider delayDuration={delayDuration} {...props} />
-);
-
-const Tooltip = TooltipPrimitive.Root;
-const TooltipTrigger = TooltipPrimitive.Trigger;
-
-const TooltipContent = React.forwardRef<
-  React.ComponentRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 6, ...props }, ref) => (
-  <TooltipPrimitive.Portal>
-    <TooltipPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-white",
-        "data-[state=delayed-open]:animate-fade-in data-[state=closed]:animate-fade-out",
-        className,
-      )}
-      {...props}
-    />
-  </TooltipPrimitive.Portal>
-));
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
-
-export {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-};
+export { Popover, PopoverTrigger, PopoverContent };

@@ -9,7 +9,6 @@ import {
   useNavigationType,
 } from "react-router-dom";
 import { LogOut, ChevronDown } from "lucide-react";
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ROUTES, route } from "@/shared/constants/routes";
 import {
@@ -21,15 +20,7 @@ import {
 import { Badge } from "@/shared/ui/badge";
 import { Avatar } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/shared/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { Footer } from "@/shared/layout/footer";
@@ -131,8 +122,8 @@ function Header() {
       {/* Right: account (always right-aligned). */}
       <div className="flex items-center gap-2 justify-self-end">
         {user ? (
-          <DropdownMenuPrimitive.Root open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuPrimitive.Trigger asChild>
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger asChild>
               <button
                 type="button"
                 className={cn(
@@ -146,45 +137,38 @@ function Header() {
                 <Avatar name={user.name} avatar={user.avatar} size={32} />
                 <ChevronDown className="size-4 text-ink-2" aria-hidden />
               </button>
-            </DropdownMenuPrimitive.Trigger>
-            <DropdownMenuPrimitive.Portal>
-              <DropdownMenuPrimitive.Content
-                align="end"
-                sideOffset={8}
-                className="z-50 min-w-44 rounded-xl border border-line bg-card p-1.5 shadow-pop focus:outline-none"
+            </PopoverTrigger>
+            <PopoverContent align="end" role="menu" className="w-auto min-w-44 p-1.5">
+              <Link
+                to={ROUTES.PROFILE}
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                }}
+                className="block rounded-lg px-3 py-2 text-sm text-ink outline-none hover:bg-tint focus-visible:bg-tint"
               >
-                <DropdownMenuPrimitive.Item asChild>
-                  <Link
-                    to={ROUTES.PROFILE}
-                    className={cn(
-                      "block cursor-pointer rounded-lg px-3 py-2 text-sm text-ink outline-none",
-                      "data-[highlighted]:bg-tint",
-                    )}
-                  >
-                    Hồ sơ
-                  </Link>
-                </DropdownMenuPrimitive.Item>
-                <DropdownMenuPrimitive.Separator className="my-1 h-px bg-line" />
-                <DropdownMenuPrimitive.Item
-                  onSelect={() => {
-                    void (async () => {
-                      /** Logout closes the Echo socket via clearSession(). */
-                      await logout();
-                      toast("Đã đăng xuất.");
-                      void navigate(ROUTES.HOME);
-                    })();
-                  }}
-                  className={cn(
-                    "cursor-pointer rounded-lg px-3 py-2 text-sm text-ink outline-none",
-                    "data-[highlighted]:bg-tint flex items-center",
-                  )}
-                >
-                  <LogOut className="mr-2 inline size-4" aria-hidden />
-                  Đăng xuất
-                </DropdownMenuPrimitive.Item>
-              </DropdownMenuPrimitive.Content>
-            </DropdownMenuPrimitive.Portal>
-          </DropdownMenuPrimitive.Root>
+                Hồ sơ
+              </Link>
+              <div role="separator" className="my-1 h-px bg-line" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void (async () => {
+                    /** Logout closes the Echo socket via clearSession(). */
+                    await logout();
+                    toast("Đã đăng xuất.");
+                    void navigate(ROUTES.HOME);
+                  })();
+                }}
+                className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-ink outline-none hover:bg-tint focus-visible:bg-tint"
+              >
+                <LogOut className="mr-2 inline size-4" aria-hidden />
+                Đăng xuất
+              </button>
+            </PopoverContent>
+          </Popover>
         ) : (
           <>
             <Button asChild variant="ghost" size="sm" className="text-sm">
@@ -242,7 +226,7 @@ function Rail() {
   const isConversationThread = /^\/messages\/\d+/.test(location.pathname);
 
   return (
-    <TooltipProvider>
+    <>
       <nav
         aria-label="Điều hướng nhanh"
         className={cn(
@@ -254,39 +238,36 @@ function Rail() {
         )}
       >
         {items.map((item) => (
-          <Tooltip key={item.label}>
-            <TooltipTrigger asChild>
-              {/* Plain Link (not NavLink): Radix asChild string-merges
-                 className, which would stringify NavLink's function form
-                 and leak "text-plate-hover" onto every icon. Active state
-                 comes from RailItems instead. */}
-              <Link
-                to={item.to}
-                aria-label={item.label}
-                aria-current={item.active ? "page" : undefined}
-                className={cn(
-                  "relative flex h-11 w-11 items-center justify-center rounded-lg transition-colors",
-                  "text-ink-2 hover:bg-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plate",
-                  item.active && "bg-plate-tint text-plate font-medium",
-                )}
+          <Link
+            key={item.label}
+            to={item.to}
+            aria-label={item.label}
+            aria-current={item.active ? "page" : undefined}
+            className={cn(
+              "group relative flex h-11 w-11 items-center justify-center rounded-lg transition-colors",
+              "text-ink-2 hover:bg-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plate",
+              item.active && "bg-plate-tint text-plate font-medium",
+            )}
+          >
+            <item.icon className="size-5" />
+            {item.badge != null && item.badge > 0 ? (
+              <Badge
+                className={cn("absolute -right-1 -top-1", item.active && "bg-plate text-white")}
               >
-                <item.icon className="size-5" />
-                {item.badge != null && item.badge > 0 ? (
-                  <Badge
-                    className={cn("absolute -right-1 -top-1", item.active && "bg-plate text-white")}
-                  >
-                    {item.badge > 99 ? "99+" : item.badge}
-                  </Badge>
-                ) : null}
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{item.label}</p>
-            </TooltipContent>
-          </Tooltip>
+                {item.badge > 99 ? "99+" : item.badge}
+              </Badge>
+            ) : null}
+            {/* Desktop-only hint, pure CSS (the link already has aria-label). */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-full z-50 ml-2 hidden whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 lg:block"
+            >
+              {item.label}
+            </span>
+          </Link>
         ))}
       </nav>
-    </TooltipProvider>
+    </>
   );
 }
 
