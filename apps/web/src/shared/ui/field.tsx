@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as LabelPrimitive from "@radix-ui/react-label";
 import { cn } from "@/shared/lib/utils";
 
 /*
@@ -8,9 +7,10 @@ import { cn } from "@/shared/lib/utils";
   always rendered with min-height).
 */
 
-export function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+export function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
-    <LabelPrimitive.Root
+    // eslint-disable-next-line jsx-a11y/label-has-associated-control -- htmlFor is passed by callers
+    <label
       className={cn(
         "text-sm font-medium leading-none text-ink peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
         className,
