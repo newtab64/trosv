@@ -379,30 +379,57 @@ describe("useListingForm: submitting an edit", () => {
 });
 
 describe("useListingForm: photos", () => {
-  it("accepts up to the limit when creating", () => {
+  const pic = (name: string, size = 1000) => {
+    const f = new File(["x"], name, { type: "image/png", lastModified: 1 });
+    Object.defineProperty(f, "size", { value: size });
+    return f;
+  };
+
+  it("adds each pick to the earlier ones instead of replacing them", () => {
+    const { result } = mount();
+    const [a, b] = [pic("a.png"), pic("b.png")] as [File, File];
+    act(() => {
+      result.current.pickFiles([a]);
+    });
+    act(() => {
+      result.current.pickFiles([b]);
+    });
+    expect(result.current.newFiles).toEqual([a, b]);
+  });
+
+  it("keeps one copy when the same file is picked twice", () => {
+    const { result } = mount();
+    act(() => {
+      result.current.pickFiles([pic("a.png")]);
+    });
+    let accepted = true;
+    act(() => {
+      accepted = result.current.pickFiles([pic("a.png")]);
+    });
+    expect(accepted).toBe(false);
+    expect(result.current.newFiles).toHaveLength(1);
+  });
+
+  it("keeps the valid photos and explains each skipped one", () => {
     const { result } = mount();
     let accepted = false;
     act(() => {
-      accepted = result.current.pickFiles(
-        Array.from({ length: MAX_PHOTOS }, (_, i) => file(`${i}.png`)),
-      );
+      accepted = result.current.pickFiles([pic("ok.png"), pic("lon.png", 6.4 * 1024 * 1024)]);
     });
     expect(accepted).toBe(true);
-    expect(result.current.newFiles).toHaveLength(MAX_PHOTOS);
-    expect(result.current.notice).toBe("");
+    expect(result.current.newFiles.map((f) => f.name)).toEqual(["ok.png"]);
+    expect(result.current.photoNotices).toEqual([
+      "“lon.png” nặng 6,4 MB, vượt 5 MB nên đã bị bỏ qua.",
+    ]);
   });
 
-  it("rejects too many photos and explains why", () => {
+  it("stops at the limit when creating", () => {
     const { result } = mount();
-    let accepted = true;
     act(() => {
-      accepted = result.current.pickFiles(
-        Array.from({ length: MAX_PHOTOS + 1 }, (_, i) => file(`${i}.png`)),
-      );
+      result.current.pickFiles(Array.from({ length: MAX_PHOTOS + 1 }, (_, i) => pic(`${i}.png`)));
     });
-    expect(accepted).toBe(false);
-    expect(result.current.notice).toBe("Tối đa 5 ảnh mỗi tin.");
-    expect(result.current.newFiles).toHaveLength(0);
+    expect(result.current.newFiles).toHaveLength(MAX_PHOTOS);
+    expect(result.current.photoNotices).toEqual(["Chỉ còn chỗ cho 5 ảnh, đã bỏ 1 ảnh cuối."]);
   });
 
   it("counts the photos a listing already has when editing", async () => {
@@ -412,29 +439,45 @@ describe("useListingForm: photos", () => {
       expect(result.current.images).toHaveLength(2);
     });
 
-    let accepted = true;
     act(() => {
-      accepted = result.current.pickFiles([
-        file("a.png"),
-        file("b.png"),
-        file("c.png"),
-        file("d.png"),
-      ]);
+      result.current.pickFiles([pic("a.png"), pic("b.png"), pic("c.png"), pic("d.png")]);
     });
 
-    expect(accepted).toBe(false);
-    expect(result.current.notice).toBe("Tin đăng chỉ có tối đa 5 ảnh.");
+    expect(result.current.newFiles).toHaveLength(3);
+    expect(result.current.photoNotices).toEqual(["Chỉ còn chỗ cho 3 ảnh, đã bỏ 1 ảnh cuối."]);
   });
 
-  it("clears the file input when the picked photos are rejected", () => {
+  it("removes one new photo by index", () => {
     const { result } = mount();
-    const input = {
-      files: Array.from({ length: MAX_PHOTOS + 1 }, (_, i) => file(`${i}.png`)),
-      value: "x",
-    };
+    const [a, b, c] = [pic("a.png"), pic("b.png"), pic("c.png")] as [File, File, File];
+    act(() => {
+      result.current.pickFiles([a, b, c]);
+    });
+    act(() => {
+      result.current.removeNewFile(0);
+    });
+    expect(result.current.newFiles).toEqual([b, c]);
+  });
+
+  it("makeCover moves a photo to the front", () => {
+    const { result } = mount();
+    const [a, b, c] = [pic("a.png"), pic("b.png"), pic("c.png")] as [File, File, File];
+    act(() => {
+      result.current.pickFiles([a, b, c]);
+    });
+    act(() => {
+      result.current.makeCover(2);
+    });
+    expect(result.current.newFiles).toEqual([c, a, b]);
+  });
+
+  it("clears the file input after every pick so the same file can be chosen again", () => {
+    const { result } = mount();
+    const input = { files: [pic("a.png")], value: "C:\\fakepath\\a.png" };
     act(() => {
       result.current.handleFilePick({ target: input } as unknown as ChangeEvent<HTMLInputElement>);
     });
+    expect(result.current.newFiles).toHaveLength(1);
     expect(input.value).toBe("");
   });
 

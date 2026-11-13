@@ -19,7 +19,8 @@ import {
   buildDescriptionRequest,
   buildListingPayload,
   formFromListing,
-  photoLimitError,
+  mergePhotos,
+  movePhotoToFront,
   type ListingFormState,
 } from "../lib/listingFormModel";
 
@@ -77,6 +78,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [photoNotices, setPhotoNotices] = useState<string[]>([]);
   // Id of the listing this form already created. If the photo upload that follows the
   // create fails, pressing save again must finish the job, not create a second listing.
   const createdId = useRef<number | null>(null);
@@ -163,20 +165,31 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     }
   }
 
-  /** Accepts the picked photos, or explains why not. Returns whether they were accepted. */
+  /**
+   * Adds the picked photos to the ones already chosen. Skipped files and trimmed picks are
+   * explained in `photoNotices`. Returns whether at least one photo was added.
+   */
   function pickFiles(files: File[]): boolean {
-    const limitError = photoLimitError(isEdit, images.length, files.length);
-    if (limitError) {
-      setNotice(limitError);
-      return false;
-    }
-    setNotice("");
-    setNewFiles(files);
-    return true;
+    const result = mergePhotos(isEdit ? images.length : 0, newFiles, files);
+    setPhotoNotices(result.notices);
+    setNewFiles(result.files);
+    return result.added > 0;
   }
 
+  /** The input is cleared every time so choosing the same file again fires `change`. */
   function handleFilePick(e: ChangeEvent<HTMLInputElement>): void {
-    if (!pickFiles(Array.from(e.target.files || []))) e.target.value = "";
+    pickFiles(Array.from(e.target.files || []));
+    e.target.value = "";
+  }
+
+  function removeNewFile(index: number): void {
+    setPhotoNotices([]);
+    setNewFiles((files) => files.filter((_, i) => i !== index));
+  }
+
+  /** The first new photo becomes the cover once uploaded. */
+  function makeCover(index: number): void {
+    setNewFiles((files) => movePhotoToFront(files, index));
   }
 
   return {
@@ -190,6 +203,10 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     changeCity,
     setCoordinates,
     pickFiles,
+    removeNewFile,
+    makeCover,
+    photoNotices,
+    setErrors,
     images,
     newFiles,
     errors,
