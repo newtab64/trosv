@@ -8,7 +8,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { toast } from "@/shared/ui/toast";
 import { BasicsSection } from "../components/landlord-form/BasicsSection";
 import { DescriptionSection } from "../components/landlord-form/DescriptionSection";
-import { LocationSection } from "../components/landlord-form/LocationSection";
+import { LocationStep } from "../components/landlord-form/LocationStep";
 import { PhotosStep } from "../components/landlord-form/PhotosStep";
 
 const toastLike = {
@@ -64,8 +64,8 @@ export default function LandlordForm() {
         ) : null}
 
         <form onSubmit={(e) => void form.handleSubmit(e, navigate)} className="flex flex-col gap-6">
+          <LocationStep form={form} />
           <BasicsSection form={form} />
-          <LocationSection form={form} />
           <DescriptionSection form={form} />
           <PhotosStep form={form} />
 
