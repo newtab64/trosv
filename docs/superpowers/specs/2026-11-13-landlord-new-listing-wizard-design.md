@@ -56,7 +56,7 @@ The goal is a form that is quick to finish on a phone or a laptop: pick an addre
 - "Tiếp tục" validates only the current step's fields and shows errors inline; it does not advance while errors remain. "Quay lại" never validates.
 - Form state lives in one place (the existing `useListingForm`) so going back keeps all values and picked photos.
 - Step 1 "Cancel" returns to the dashboard; steps 2-4 show "Quay lại".
-- Edit mode uses the same steps, starts on step 1 with values filled, and shows the already-uploaded photos (with delete and "make cover") above the new-photo picker in step 3. A stepper click on a completed step may jump to it. The builder decides whether to also allow jumping forward in edit mode.
+- Edit mode uses the same steps, starts on step 1 with values filled, and shows the already-uploaded photos (with delete only) before the new photos in step 3. "Make cover" applies to new photos only, and only while the listing has no photos yet: the API's cover is the oldest photo and there is no endpoint to change it. A stepper click on a completed step may jump to it. The builder decides whether to also allow jumping forward in edit mode.
 - Required fields per step: Vị trí needs a pin (latitude/longitude set), ward and address; Thông tin needs title, type, price, area; Ảnh and Mô tả have no required fields (same as today).
 
 ### 5.2 Photos
