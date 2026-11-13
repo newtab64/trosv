@@ -7,6 +7,7 @@ use App\Modules\Listing\Models\Listing;
 use App\Modules\Messaging\Events\MessageSent;
 use App\Modules\Messaging\Models\Conversation;
 use App\Modules\Messaging\Models\Message;
+use App\Modules\Messaging\Services\ConversationService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -260,6 +261,43 @@ class ConversationTest extends TestCase
     // ------------------------------------------------------------------
     // Messages: send JSON, poll with after_id
     // ------------------------------------------------------------------
+
+    public function test_initial_load_returns_latest_500_messages_oldest_first(): void
+    {
+        $conversation = $this->createConversation();
+        Message::factory()->count(501)->create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $this->landlord->id,
+        ]);
+        $lastId = Message::max('id');
+
+        $ids = $this->actingAs($this->student, 'sanctum')
+            ->getJson("/api/conversations/{$conversation->id}/messages")
+            ->assertOk()
+            ->json('data.*.id');
+
+        $this->assertCount(500, $ids);
+        $this->assertSame($lastId, end($ids));
+        $this->assertSame($ids, collect($ids)->sort()->values()->all());
+    }
+
+    public function test_room_link_for_room_1_is_not_skipped_after_room_12(): void
+    {
+        $conversation = $this->createConversation();
+        Message::factory()->create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $this->student->id,
+            'body' => "/rooms/{$this->listing->id}0", // looks like the same prefix, is another room
+        ]);
+
+        app(ConversationService::class)
+            ->sendRoomLinkIfNecessary($conversation, $this->student, $this->listing);
+
+        $this->assertDatabaseHas('messages', [
+            'conversation_id' => $conversation->id,
+            'body' => "/rooms/{$this->listing->id}",
+        ]);
+    }
 
     public function test_send_message_and_poll_with_after_id(): void
     {

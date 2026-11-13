@@ -23,18 +23,20 @@ class ListingImageService
      */
     public function uploadImages(Listing $listing, array $files): Collection
     {
-        $existingCount = $listing->images()->count();
-
-        if ($existingCount + count($files) > 5) {
-            throw new HttpResponseException(response()->json([
-                'message' => 'Tin đăng chỉ có tối đa 5 ảnh.',
-                'errors' => ['images' => ['Tin đăng chỉ có tối đa 5 ảnh (hiện có '.$existingCount.').']],
-            ], 422));
-        }
-
         $createdPaths = [];
         try {
             DB::transaction(function () use ($listing, $files, &$createdPaths) {
+                // Lock the listing row so concurrent uploads count one at a time.
+                Listing::whereKey($listing->id)->lockForUpdate()->first();
+                $existingCount = $listing->images()->count();
+
+                if ($existingCount + count($files) > 5) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Tin đăng chỉ có tối đa 5 ảnh.',
+                        'errors' => ['images' => ['Tin đăng chỉ có tối đa 5 ảnh (hiện có '.$existingCount.').']],
+                    ], 422));
+                }
+
                 foreach ($files as $file) {
                     $extension = match ($file->getMimeType()) {
                         'image/jpeg' => 'jpg',

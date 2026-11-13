@@ -11,6 +11,7 @@ use App\Modules\Messaging\Models\Message;
 use App\Shared\Support\StoragePath;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -31,13 +32,22 @@ class ConversationService
         })->first();
 
         if (! $conversation) {
-            $conversation = Conversation::create([
-                'student_id' => $userAId,
-                'landlord_id' => $userBId,
-                'listing_id' => $listingId,
-            ]);
+            try {
+                $conversation = Conversation::create([
+                    'student_id' => $userAId,
+                    'landlord_id' => $userBId,
+                    'listing_id' => $listingId,
+                ]);
 
-            return [$conversation, true];
+                return [$conversation, true];
+            } catch (UniqueConstraintViolationException) {
+                // Double-click race: the other request created the pair first.
+                $conversation = Conversation::where(function ($q) use ($userAId, $userBId) {
+                    $q->where('student_id', $userAId)->where('landlord_id', $userBId);
+                })->orWhere(function ($q) use ($userAId, $userBId) {
+                    $q->where('student_id', $userBId)->where('landlord_id', $userAId);
+                })->firstOrFail();
+            }
         }
 
         if ($listingId !== null && $conversation->listing_id !== $listingId) {
@@ -110,15 +120,17 @@ class ConversationService
             ->where(fn ($q) => $q
                 ->whereNull('deleted_for_user_ids')
                 ->orWhereJsonDoesntContain('deleted_for_user_ids', $viewer->id))
-            ->orderBy('id')
             ->limit(500);
 
         if ($afterId !== null) {
-            $query->where('id', '>', $afterId);
+            // Polling: the next messages after the client's last one, oldest first.
+            /** @var Collection<int, Message> */
+            return $query->where('id', '>', $afterId)->orderBy('id')->get();
         }
 
+        // Initial load: the LATEST 500, shown oldest first.
         /** @var Collection<int, Message> */
-        return $query->get();
+        return $query->orderByDesc('id')->get()->reverse()->values();
     }
 
     /**
@@ -129,7 +141,7 @@ class ConversationService
         $roomPath = "/rooms/{$listing->id}";
         $recentlySent = $conversation->messages()
             ->where('sender_id', $student->id)
-            ->where('body', 'like', "%{$roomPath}%")
+            ->where('body', $roomPath)
             ->where('created_at', '>=', now()->subMinutes(15))
             ->exists();
 
