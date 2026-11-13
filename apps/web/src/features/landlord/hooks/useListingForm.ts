@@ -21,6 +21,7 @@ import {
   formFromListing,
   type ListingFormState,
 } from "../lib/listingFormModel";
+import { useLocationFill } from "./useLocationFill";
 import { usePhotoPicker } from "./usePhotoPicker";
 
 /** Toast interface du can cua hook - khong toan bo toast context. */
@@ -75,6 +76,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const photos = usePhotoPicker(isEdit ? images.length : 0);
   const { newFiles } = photos;
+  const location = useLocationFill({ cities, wards, setForm });
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -96,6 +98,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
 
   const setField = (key: keyof ListingFormState, value: string): void => {
     setErrors({});
+    if (key === "address" || key === "city_id" || key === "ward_id") location.clearAutofilled();
     setForm((f) => ({ ...f, [key]: value }));
   };
 
@@ -109,6 +112,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   /** Choosing another city clears the ward, so the two never disagree. */
   const changeCity = (cityId: string): void => {
     setErrors({});
+    location.clearAutofilled();
     setForm((f) => ({ ...f, city_id: cityId, ward_id: "" }));
   };
 
@@ -175,6 +179,7 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
     changeCity,
     setCoordinates,
     ...photos,
+    ...location,
     setErrors,
     images,
     errors,

@@ -113,6 +113,31 @@ describe("useListingForm: loading", () => {
   });
 });
 
+describe("useListingForm: location", () => {
+  it("exposes the address autofill and turns its message off after a manual edit", () => {
+    const { result } = mount();
+    act(() => {
+      result.current.applySuggestion({
+        id: "N1",
+        label: "x",
+        detail: "",
+        latitude: 21,
+        longitude: 105,
+        street: "12 Đại Cồ Việt",
+        cityName: null,
+        wardCandidates: [],
+      });
+    });
+    expect(result.current.form).toMatchObject({ latitude: 21, address: "12 Đại Cồ Việt" });
+    expect(result.current.autofilled).toBe(true);
+
+    act(() => {
+      result.current.setField("address", "14 Đại Cồ Việt");
+    });
+    expect(result.current.autofilled).toBe(false);
+  });
+});
+
 describe("useListingForm: editing fields", () => {
   it("setField updates one field and clears old validation errors", async () => {
     api.createListing.mockRejectedValue(apiError(422, { errors: { title: ["Bắt buộc"] } }));
