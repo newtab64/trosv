@@ -29,7 +29,8 @@ function StepItem(props: {
       >
         {state === "done" ? "✓" : index + 1}
       </span>
-      <span>{name}</span>
+      {/* On a phone only the current step keeps its name, or the row is wider than the screen. */}
+      <span className={state === "current" ? undefined : "hidden sm:inline"}>{name}</span>
     </>
   );
   const tone = { done: "text-ink", current: "text-plate", todo: "text-muted" }[state];
@@ -37,7 +38,12 @@ function StepItem(props: {
   return (
     <li aria-current={state === "current" ? "step" : undefined} className="flex items-center">
       {onClick ? (
-        <button type="button" onClick={onClick} className={cn(cls, "hover:underline")}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={`Bước ${String(index + 1)}: ${name}`}
+          className={cn(cls, "hover:underline")}
+        >
           {body}
         </button>
       ) : (

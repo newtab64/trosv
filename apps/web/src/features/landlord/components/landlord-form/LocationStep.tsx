@@ -66,9 +66,14 @@ export function LocationStep({ form: f }: { form: ListingFormApi }) {
         <button
           type="button"
           onClick={() => void f.locateMe()}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-plate hover:underline"
+          disabled={f.locating}
+          className={
+            "inline-flex items-center gap-1.5 text-sm font-semibold text-plate " +
+            "hover:underline disabled:cursor-wait disabled:opacity-60 disabled:no-underline"
+          }
         >
-          <LocateFixed className="size-4" aria-hidden /> Dùng vị trí hiện tại
+          <LocateFixed className="size-4" aria-hidden />{" "}
+          {f.locating ? "Đang lấy vị trí…" : "Dùng vị trí hiện tại"}
         </button>
       </div>
       {f.locateError ? <p className="text-sm text-danger">{f.locateError}</p> : null}

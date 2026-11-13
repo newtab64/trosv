@@ -28,12 +28,16 @@ export function useWizardSteps(args: {
     return true;
   }
 
+  /** Messages belong to the step they were raised on: leaving it must not bring them back. */
   function back(): void {
+    setErrors({});
     setStep((s) => (s > 0 ? ((s - 1) as WizardStep) : s));
   }
 
   function goTo(target: WizardStep): void {
-    if (isEdit || target <= step) setStep(target);
+    if (!isEdit && target > step) return;
+    setErrors({});
+    setStep(target);
   }
 
   function jumpTo(target: WizardStep): void {

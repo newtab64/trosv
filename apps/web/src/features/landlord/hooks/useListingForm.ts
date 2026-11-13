@@ -117,9 +117,14 @@ export function useListingForm(id: number | undefined, toast: ToastLike) {
   };
 
   /** Stable on purpose: the map effect depends on it and must not restart. */
-  const setCoordinates = useCallback((latitude: number, longitude: number): void => {
-    setForm((f) => ({ ...f, latitude, longitude }));
-  }, []);
+  const { cancelLocate } = location;
+  const setCoordinates = useCallback(
+    (latitude: number, longitude: number): void => {
+      cancelLocate();
+      setForm((f) => ({ ...f, latitude, longitude }));
+    },
+    [cancelLocate],
+  );
 
   function toggleAmenity(amenityId: number): void {
     setForm((f) => ({ ...f, amenity_ids: toggleId(f.amenity_ids, amenityId) }));

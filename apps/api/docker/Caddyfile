@@ -28,7 +28,7 @@
 
 	# Upload lon nhat: 5 anh x 5MB (tin dang) hoac 5MB (tep tin nhan) + overhead multipart.
 	request_body {
-		max_size 26MB
+		max_size 26MiB
 	}
 
 	log {

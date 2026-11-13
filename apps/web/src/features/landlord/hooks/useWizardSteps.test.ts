@@ -114,4 +114,21 @@ describe("useWizardSteps", () => {
     expect(moved).toBe(false);
     expect(result.current.step).toBe(3);
   });
+
+  it("clears the error messages when going back or clicking the stepper, so they do not drag the landlord back", () => {
+    const { result, setErrors } = mount(FULL, true);
+    act(() => {
+      result.current.jumpTo(2);
+    });
+    setErrors.mockClear();
+    act(() => {
+      result.current.back();
+    });
+    expect(setErrors).toHaveBeenLastCalledWith({});
+    setErrors.mockClear();
+    act(() => {
+      result.current.goTo(3);
+    });
+    expect(setErrors).toHaveBeenLastCalledWith({});
+  });
 });

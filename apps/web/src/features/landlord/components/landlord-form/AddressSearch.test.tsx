@@ -67,6 +67,17 @@ describe("AddressSearch", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
+  it("closes the list when the box loses focus, and reopens it on focus", () => {
+    search.mockReturnValue({ suggestions: [sug(1)], status: "idle" });
+    render(<AddressSearch onPick={vi.fn()} />);
+    type("đường");
+    const box = screen.getByRole("combobox");
+    fireEvent.blur(box);
+    expect(screen.queryByRole("listbox")).toBeNull();
+    fireEvent.focus(box);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+  });
+
   it("does not search again after a suggestion is picked", () => {
     search.mockReturnValue({ suggestions: [sug(1)], status: "idle" });
     render(<AddressSearch onPick={vi.fn()} />);

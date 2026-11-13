@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { LANDLORD, loginAs } from "./helpers";
+import { LANDLORD } from "./helpers";
+
+const API = "http://localhost:8000/api";
+
+interface Session {
+  token: string;
+  user: unknown;
+}
 
 // Read-only: these specs never press "Đăng tin", so they never write to the demo database.
 
@@ -20,8 +27,8 @@ async function pickPhotos(page: Page, count: number, prefix = "photo"): Promise<
 
 const next = (page: Page) => page.getByRole("button", { name: /Tiếp tục/ }).click();
 
-/** Step 1: pin on the map, city, ward and address, then on to step 2. */
-async function fillLocation(page: Page): Promise<void> {
+/** Step 1: pin on the map, city, ward and address (stays on the step). */
+async function fillLocationFields(page: Page): Promise<void> {
   await page
     .getByTestId("coordinate-picker")
     .locator(".leaflet-container")
@@ -31,22 +38,48 @@ async function fillLocation(page: Page): Promise<void> {
   await page.locator("#lf-city").selectOption({ index: 1 });
   await page.locator("#lf-ward").selectOption({ index: 1 });
   await page.locator("#lf-address").fill("12 Đường số 5");
+}
+
+/** Step 1, filled in, then on to step 2. */
+async function fillLocation(page: Page): Promise<void> {
+  await fillLocationFields(page);
   await next(page);
 }
 
-/** Step 2: the main facts, then on to step 3. */
-async function fillInfo(page: Page): Promise<void> {
+/** Step 2: the main facts (stays on the step). */
+async function fillInfoFields(page: Page): Promise<void> {
   await page.locator("#lf-title").fill("Phòng thử nghiệm");
   await page.locator("#lf-price").fill("2500000");
   await page.locator("#lf-area").fill("20");
+}
+
+/** Step 2, filled in, then on to step 3. */
+async function fillInfo(page: Page): Promise<void> {
+  await fillInfoFields(page);
   await next(page);
 }
 
 test.describe("landlord listing form (wizard)", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
+  // One login for the whole file: the API allows only a few logins per minute.
+  let session: Session;
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post(`${API}/login`, {
+      data: { email: LANDLORD, password: "password" },
+      headers: { Accept: "application/json" },
+    });
+    session = ((await res.json()) as { data: Session }).data;
+  });
+
   test.beforeEach(async ({ page }) => {
-    await loginAs(page, LANDLORD);
+    await page.addInitScript(
+      ([t, u]) => {
+        localStorage.setItem("token", t);
+        localStorage.setItem("user", JSON.stringify(u));
+      },
+      [session.token, session.user] as [string, unknown],
+    );
     await page.goto("/landlord/new");
     await expect(page.getByRole("heading", { level: 1, name: "Đăng tin mới" })).toBeVisible();
   });
@@ -68,6 +101,16 @@ test.describe("landlord listing form (wizard)", () => {
 
     await city.selectOption({ index: 2 });
     await expect(ward).toHaveValue("");
+  });
+
+  test("the page does not scroll sideways on a phone", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/landlord/new");
+    await expect(page.getByRole("heading", { level: 2, name: "Phòng ở đâu?" })).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
   });
 
   test("'Tiếp tục' stays on the step and explains what is missing", async ({ page }) => {
@@ -140,6 +183,40 @@ test.describe("landlord listing form (wizard)", () => {
     await expect(page.getByText("4/5 ảnh")).toBeVisible();
   });
 
+  test("Enter in a field goes to the next step and never saves", async ({ page }) => {
+    let saved = false;
+    await page.route("**/api/listings", (route) => {
+      if (route.request().method() === "POST") saved = true;
+      return route.continue();
+    });
+    await fillLocationFields(page);
+    await page.locator("#lf-address").press("Enter");
+    await expect(page.getByRole("heading", { level: 2, name: "Thông tin chính" })).toBeVisible();
+    expect(saved).toBe(false);
+  });
+
+  test("a double click on 'Tiếp tục' never saves the listing", async ({ page }) => {
+    let saved = false;
+    await page.route("**/api/listings", (route) => {
+      if (route.request().method() === "POST") saved = true;
+      return route.continue();
+    });
+    await fillLocation(page);
+    await fillInfoFields(page);
+    await page.getByRole("button", { name: /Tiếp tục/ }).dblclick();
+    await page.waitForTimeout(500);
+    expect(saved).toBe(false);
+  });
+
+  test("'Quay lại' leaves a step that still shows an error", async ({ page }) => {
+    await fillLocation(page);
+    await next(page);
+    await expect(page.getByText("Tiêu đề phải từ 5 đến 200 ký tự.")).toBeVisible();
+    await page.getByRole("button", { name: /Quay lại$/ }).click();
+    await page.waitForTimeout(300);
+    await expect(page.getByRole("heading", { level: 2, name: "Phòng ở đâu?" })).toBeVisible();
+  });
+
   test("reaching the last step does not save the listing", async ({ page }) => {
     let saved = false;
     await page.route("**/api/listings", (route) => {
@@ -155,9 +232,8 @@ test.describe("landlord listing form (wizard)", () => {
   });
 
   test("editing shows the status select and the existing photos", async ({ page, request }) => {
-    const { token } = (await loginAs(page, LANDLORD)) as { token: string };
-    const res = await request.get("http://localhost:8000/api/my/listings", {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    const res = await request.get(`${API}/my/listings`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${session.token}` },
     });
     const first = ((await res.json()) as { data: { id: number; title: string }[] }).data[0];
     test.skip(first === undefined, "the seeded landlord has no listing");

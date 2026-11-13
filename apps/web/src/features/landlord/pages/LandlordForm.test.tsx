@@ -134,6 +134,36 @@ describe("LandlordForm wizard", () => {
     expect(api.createListing).not.toHaveBeenCalled();
   });
 
+  it("'Tiếp tục' is a submit button, so Enter in a field moves on in a real browser", () => {
+    mount();
+    expect(screen.getByRole("button", { name: /Tiếp tục/ })).toHaveAttribute("type", "submit");
+  });
+
+  it("a double click on 'Tiếp tục' does not save the listing from the step behind it", () => {
+    mount();
+    fillLocation();
+    next();
+    fillInfo();
+    next();
+    fireEvent.click(screen.getByRole("button", { name: /Tiếp tục/ }), { detail: 1 });
+    fireEvent.click(screen.getByRole("button", { name: "Đăng tin" }), { detail: 2 });
+    expect(api.createListing).not.toHaveBeenCalled();
+  });
+
+  it("'Quay lại' leaves a step even while that step still shows an error", async () => {
+    mount();
+    fillLocation();
+    next();
+    next();
+    expect(screen.getByText("Tiêu đề phải từ 5 đến 200 ký tự.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Quay lại$/ }));
+    await waitFor(() => {
+      expect(heading("Phòng ở đâu?")).toBeInTheDocument();
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(heading("Phòng ở đâu?")).toBeInTheDocument();
+  });
+
   it("ends with a review and the 'Đăng tin' button, which saves once", async () => {
     api.createListing.mockResolvedValue({ id: 11 });
     mount();

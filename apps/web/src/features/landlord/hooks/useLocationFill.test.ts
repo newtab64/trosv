@@ -68,12 +68,22 @@ describe("useLocationFill: applySuggestion", () => {
     expect(result.current.form).toMatchObject({ city_id: 1, ward_id: "" });
   });
 
-  it("keeps the city and ward already chosen when nothing matches", () => {
+  it("leaves the city and ward empty when nothing matches, instead of keeping the old place's", () => {
     const { result } = mount({ city_id: 2, ward_id: 99 });
     act(() => {
       result.current.applySuggestion(sug({ cityName: "Huế", wardCandidates: ["Phú Hội"] }));
     });
-    expect(result.current.form).toMatchObject({ city_id: 2, ward_id: 99, latitude: 21.005 });
+    expect(result.current.form).toMatchObject({ city_id: "", ward_id: "", latitude: 21.005 });
+  });
+
+  it("does not claim an autofill when nothing was filled in", () => {
+    const { result } = mount();
+    act(() => {
+      result.current.applySuggestion(
+        sug({ street: "", cityName: "Huế", wardCandidates: ["Phú Hội"] }),
+      );
+    });
+    expect(result.current.autofilled).toBe(false);
   });
 
   it("keeps the typed address when the suggestion has no street line", () => {
@@ -159,5 +169,77 @@ describe("useLocationFill: locateMe", () => {
       await result.current.locateMe();
     });
     expect(result.current.locateError).toContain("Không lấy được vị trí");
+  });
+});
+
+describe("useLocationFill: locating takes time", () => {
+  /** A geolocation whose answer the test releases by hand. */
+  function manualGeolocation() {
+    const calls: ((p: unknown) => void)[] = [];
+    setGeolocation({
+      getCurrentPosition: (ok: (p: unknown) => void) => {
+        calls.push(ok);
+      },
+    });
+    return {
+      calls,
+      answer: (lat: number, lng: number) => {
+        calls[0]?.({ coords: { latitude: lat, longitude: lng } });
+      },
+    };
+  }
+
+  it("reports that it is locating, and ignores a second tap meanwhile", async () => {
+    const geo = manualGeolocation();
+    const { result } = mount();
+    act(() => {
+      void result.current.locateMe();
+      void result.current.locateMe();
+    });
+    expect(result.current.locating).toBe(true);
+    expect(geo.calls).toHaveLength(1);
+    reverse.mockResolvedValue(null);
+    await act(async () => {
+      geo.answer(21.1, 105.9);
+      await Promise.resolve();
+    });
+    expect(result.current.locating).toBe(false);
+  });
+
+  it("does not overwrite a suggestion chosen while the position was still coming", async () => {
+    const geo = manualGeolocation();
+    const { result } = mount();
+    act(() => {
+      void result.current.locateMe();
+    });
+    act(() => {
+      result.current.applySuggestion(sug());
+    });
+    reverse.mockResolvedValue(sug({ street: "Nơi khác" }));
+    await act(async () => {
+      geo.answer(10, 10);
+      await Promise.resolve();
+    });
+    expect(result.current.form).toMatchObject({
+      latitude: 21.005,
+      address: "12 Ngõ 35 Đại Cồ Việt",
+    });
+    expect(result.current.locating).toBe(false);
+  });
+
+  it("does not overwrite a pin placed on the map while the position was still coming", async () => {
+    const geo = manualGeolocation();
+    const { result } = mount();
+    act(() => {
+      void result.current.locateMe();
+    });
+    act(() => {
+      result.current.cancelLocate();
+    });
+    await act(async () => {
+      geo.answer(10, 10);
+      await Promise.resolve();
+    });
+    expect(result.current.form.latitude).toBe("");
   });
 });

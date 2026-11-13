@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { ROUTES, route } from "@/shared/constants/routes";
@@ -24,6 +24,14 @@ const toastLike = {
 };
 
 type Wizard = ReturnType<typeof useWizardSteps>;
+
+/**
+ * The second click of a double click lands on whatever button now sits where the first one
+ * was (the next step's "Đăng tin"), so it must never submit anything.
+ */
+const ignoreDoubleClick = (e: MouseEvent): void => {
+  if (e.detail > 1) e.preventDefault();
+};
 
 /** The one step that is showing: the last step also carries the review. */
 function StepBody({ step, form }: { step: WizardStep; form: ListingFormApi }) {
@@ -55,11 +63,17 @@ function WizardFooter(props: { wizard: Wizard; form: ListingFormApi; onCancel: (
       {/* Distinct keys: the same DOM button must not turn from "next" into "submit" in the
           middle of the click that reaches the last step, or the browser saves the listing. */}
       {wizard.isLast ? (
-        <Button key="save" type="submit" variant="primary" loading={form.busy}>
+        <Button
+          key="save"
+          type="submit"
+          variant="primary"
+          loading={form.busy}
+          onClick={ignoreDoubleClick}
+        >
           {form.isEdit ? "Lưu thay đổi" : "Đăng tin"}
         </Button>
       ) : (
-        <Button key="next" type="button" variant="primary" onClick={wizard.next}>
+        <Button key="next" type="submit" variant="primary" onClick={ignoreDoubleClick}>
           Tiếp tục →
         </Button>
       )}

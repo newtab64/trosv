@@ -73,6 +73,9 @@ export function AddressSearch({ onPick }: { onPick: (s: GeoSuggestion) => void }
           onFocus={() => {
             setOpen(true);
           }}
+          onBlur={() => {
+            setOpen(false);
+          }}
           onKeyDown={onKeyDown}
         />
       </div>

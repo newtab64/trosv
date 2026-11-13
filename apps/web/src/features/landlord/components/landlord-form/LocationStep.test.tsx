@@ -56,6 +56,12 @@ describe("LocationStep", () => {
     expect(form.locateMe).toHaveBeenCalled();
   });
 
+  it("shows that it is locating and does not accept another tap", () => {
+    render(<LocationStep form={api({ locating: true })} />);
+    const button = screen.getByRole("button", { name: /Đang lấy vị trí/ });
+    expect(button).toBeDisabled();
+  });
+
   it("tells the landlord what was filled in automatically", () => {
     render(<LocationStep form={api({ autofilled: true })} />);
     expect(
