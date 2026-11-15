@@ -19,3 +19,5 @@ function Root() {
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("Missing #root mount element");
 createRoot(rootEl).render(<Root />);
+
+// pr-guard-e2e: test comment

@@ -12,3 +12,5 @@ Route::get('/health', [HealthController::class, 'show']);
 foreach (glob(app_path('Modules/*/routes.php')) ?: [] as $moduleRoutes) {
     require $moduleRoutes;
 }
+
+// pr-guard-e2e: test comment
