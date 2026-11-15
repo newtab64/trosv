@@ -36,11 +36,11 @@ function RailIconBase({
   );
 }
 
-export function RailSearchIcon({ className }: { className?: string }) {
+export function RailHomeIcon({ className }: { className?: string }) {
   return (
     <RailIconBase className={className}>
-      <circle cx="14" cy="14" r="9" />
-      <line x1="21" y1="21" x2="27.5" y2="27.5" />
+      <path d="M4 15 16 4.5 28 15" />
+      <path d="M7 13.5V27h6.5v-8h5v8H25V13.5" />
     </RailIconBase>
   );
 }

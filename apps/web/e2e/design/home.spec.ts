@@ -172,3 +172,19 @@ test.describe("home on a phone", () => {
     expect(card!.y).toBeLessThan(900);
   });
 });
+
+test.describe("header menu", () => {
+  test("the header menu is centered and Tìm phòng opens the room types", async ({ page }) => {
+    await page.setViewportSize({ width: 1360, height: 900 });
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Điều hướng chính" });
+    const box = await nav.boundingBox();
+    expect(Math.abs(box!.x + box!.width / 2 - 1360 / 2)).toBeLessThanOrEqual(40);
+    await nav.getByRole("button", { name: "Tìm phòng" }).click();
+    for (const name of ["Tất cả phòng", "Phòng trọ", "Căn hộ", "Nhà nguyên căn"]) {
+      await expect(page.getByRole("link", { name })).toBeVisible();
+    }
+    await page.getByRole("link", { name: "Căn hộ" }).click();
+    await expect(page).toHaveURL(/type=apartment/);
+  });
+});
