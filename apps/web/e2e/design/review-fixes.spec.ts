@@ -65,7 +65,7 @@ test.describe("review fixes", () => {
 
     await page.goto("/rooms");
     await check(page.getByLabel("Tìm theo khu vực"), "strip input");
-    await check(page.getByRole("button", { name: "Bộ lọc", exact: true }), "filter pill");
+    await check(page.getByRole("button", { name: "Khu vực", exact: true }), "filter pill");
   });
 
   test("browser Back returns to the previous scroll position", async ({ page }) => {

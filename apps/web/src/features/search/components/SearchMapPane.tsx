@@ -51,6 +51,12 @@ export function SearchMapPane({
   const navigate = useNavigate();
   // Not mounted at all when neither applies, so a hidden map loads no tiles.
   if (hidden && mobileTab === "list") return null;
+
+  const selectedSchool = search.filters.school_id
+    ? search.schools.find((s) => String(s.id) === search.filters.school_id) ?? null
+    : null;
+  const radiusKm = search.filters.max_km ? Number(search.filters.max_km) : null;
+
   return (
     <div
       data-testid="map-pane"
@@ -76,6 +82,8 @@ export function SearchMapPane({
           hasLocationFilter={Boolean(
             search.filters.city_id || search.filters.ward_id || search.filters.school_id,
           )}
+          school={selectedSchool}
+          radiusKm={radiusKm}
           ariaLabel="Bản đồ phòng trọ"
         />
       </div>

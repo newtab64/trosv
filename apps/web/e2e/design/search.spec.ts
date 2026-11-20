@@ -8,7 +8,7 @@ test.describe("search strip", () => {
     const strip = page.locator('[data-testid="plate-band"][data-size="strip"]');
     await expect(strip).toBeVisible();
     await expect(strip.getByLabel("Tìm theo khu vực")).toBeVisible();
-    await expect(strip.getByRole("button", { name: "Bộ lọc" })).toBeVisible();
+    await expect(strip.getByRole("button", { name: "Khu vực" })).toBeVisible();
 
     const s = await strip.boundingBox();
     expect(s!.height).toBeLessThanOrEqual(80);

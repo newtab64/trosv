@@ -1,5 +1,5 @@
 /*
-  Pure rules for the city -> ward -> school cascade in the filter popovers.
+  Pure rules for the city -> ward & city -> school cascade in the filter popovers.
 */
 
 interface WithCity {
@@ -25,24 +25,18 @@ export function wardsInCity<T extends WardLike>(wards: readonly T[], cityId: str
   return wards.filter((w) => cityId === "" || cityOf(w) === cityId);
 }
 
-/** Schools of the chosen ward, else of the chosen city, else all. */
+/** Schools of the chosen city (all while no city is chosen). School is bound to city, not ward. */
 export function schoolsFor<T extends SchoolLike>(
   schools: readonly T[],
-  selection: { cityId: string; wardId: string },
+  selection: { cityId: string; wardId?: string },
 ): T[] {
-  return schools.filter((s) =>
-    selection.wardId !== ""
-      ? String(s.ward?.id) === selection.wardId
-      : selection.cityId === "" || cityOf(s) === selection.cityId,
-  );
+  return schools.filter((s) => selection.cityId === "" || cityOf(s) === selection.cityId);
 }
 
 export function wardPlaceholder(cityId: string): string {
   return cityId === "" ? "Chọn Tỉnh/TP trước" : "Tất cả phường";
 }
 
-export function schoolPlaceholder(cityId: string, wardId: string): string {
-  if (cityId === "") return "Chọn Tỉnh/TP trước";
-  if (wardId === "") return "Chọn Phường trước";
-  return "Chọn trường trong phường này";
+export function schoolPlaceholder(cityId: string): string {
+  return cityId === "" ? "Chọn Tỉnh/TP trước" : "Chọn trường đại học";
 }

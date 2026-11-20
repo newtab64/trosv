@@ -34,27 +34,19 @@ describe("wardsInCity", () => {
 });
 
 describe("schoolsFor", () => {
-  it("narrows to the ward when one is chosen (the city is then implied)", () => {
+  it("narrows to the chosen city regardless of ward", () => {
     expect(schoolsFor(schools, { cityId: "20", wardId: "2" }).map((s) => s.name)).toEqual([
       "UIT",
       "HCMIU",
     ]);
   });
 
-  it("uses the ward even without a city", () => {
-    expect(schoolsFor(schools, { cityId: "", wardId: "1" }).map((s) => s.id)).toEqual([1]);
+  it("lists all schools in the chosen city", () => {
+    expect(schoolsFor(schools, { cityId: "20" }).map((s) => s.id)).toEqual([2, 3]);
   });
 
-  it("falls back to the city when no ward is chosen", () => {
-    expect(schoolsFor(schools, { cityId: "20", wardId: "" }).map((s) => s.id)).toEqual([2, 3]);
-  });
-
-  it("lists every school when nothing is chosen", () => {
-    expect(schoolsFor(schools, { cityId: "", wardId: "" })).toHaveLength(4);
-  });
-
-  it("a ward that no school belongs to gives an empty list", () => {
-    expect(schoolsFor(schools, { cityId: "", wardId: "99" })).toEqual([]);
+  it("lists every school when no city is chosen", () => {
+    expect(schoolsFor(schools, { cityId: "" })).toHaveLength(4);
   });
 });
 
@@ -62,8 +54,7 @@ describe("placeholders", () => {
   it("guides the user through the cascade", () => {
     expect(wardPlaceholder("")).toBe("Chọn Tỉnh/TP trước");
     expect(wardPlaceholder("10")).toBe("Tất cả phường");
-    expect(schoolPlaceholder("", "")).toBe("Chọn Tỉnh/TP trước");
-    expect(schoolPlaceholder("10", "")).toBe("Chọn Phường trước");
-    expect(schoolPlaceholder("10", "1")).toBe("Chọn trường trong phường này");
+    expect(schoolPlaceholder("")).toBe("Chọn Tỉnh/TP trước");
+    expect(schoolPlaceholder("10")).toBe("Chọn trường đại học");
   });
 });

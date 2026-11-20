@@ -97,7 +97,7 @@ export function withCity(filters: ListingFilters, cityId: string): ListingFilter
   return { ...filters, city_id: cityId, ward_id: "", school_id: "", max_km: "" };
 }
 
-/** Another ward: the school list is per ward, so the school and radius reset. */
+/** Another ward: keep chosen school & radius since school is bound only to city, not ward. */
 export function withWard(filters: ListingFilters, wardId: string): ListingFilters {
-  return { ...filters, ward_id: wardId, school_id: "", max_km: "" };
+  return { ...filters, ward_id: wardId };
 }

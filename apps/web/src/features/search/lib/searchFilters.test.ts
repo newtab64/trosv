@@ -115,12 +115,12 @@ describe("cascade", () => {
     });
   });
 
-  it("a new ward clears school and radius, keeps the city", () => {
+  it("a new ward keeps the school and city since school is city-scoped", () => {
     expect(withWard(set, "8")).toMatchObject({
       city_id: "1",
       ward_id: "8",
-      school_id: "",
-      max_km: "",
+      school_id: "3",
+      max_km: "5",
     });
   });
 

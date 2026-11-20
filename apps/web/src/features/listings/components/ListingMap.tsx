@@ -2,7 +2,8 @@ import { formatVnd } from "@/shared/lib/format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet.markercluster";
-import type { Listing } from "@/shared/types/api";
+import type { Listing, School } from "@/shared/types/api";
+import { fitMapBounds, renderSchoolLayer, VIETNAM_BOUNDS } from "./schoolMarker";
 import "@/features/listings/components/leaflet-pins.css";
 
 /*
@@ -12,10 +13,6 @@ import "@/features/listings/components/leaflet-pins.css";
 */
 
 const DEFAULT_CENTER: [number, number] = [16.0471, 107.5]; // Việt Nam trung tâm
-const VIETNAM_BOUNDS: [[number, number], [number, number]] = [
-  [8.5, 102.1], // Cà Mau / Nam Bộ
-  [23.4, 109.5], // Hà Giang / Bắc Bộ
-];
 
 export interface ListingMapProps {
   listings: Listing[];
@@ -26,6 +23,8 @@ export interface ListingMapProps {
   hasLocationFilter?: boolean;
   /** Wheel zoom hijacks page scroll; embedded maps turn it off. */
   scrollWheelZoom?: boolean;
+  school?: School | null;
+  radiusKm?: number | null;
 }
 
 /* Cluster icon: ink circle with paper number. */
@@ -66,9 +65,12 @@ export function ListingMap({
   ariaLabel = "Bản đồ phòng trọ",
   hasLocationFilter = false,
   scrollWheelZoom = true,
+  school,
+  radiusKm,
 }: ListingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const clusterGroup = useRef<L.MarkerClusterGroup | L.FeatureGroup | null>(null);
+  const schoolLayerGroup = useRef<L.LayerGroup | null>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const prevListingsKey = useRef<string>("");
   const [ready, setReady] = useState(false);
@@ -101,29 +103,10 @@ export function ListingMap({
   }, [points]);
 
   const fitBoundsToPoints = useCallback(() => {
-    const map = leafletMap.current;
-    if (!map) return;
-
-    // When user chooses NO location filter, default focus is the entire country (not a single city like Da Nang)
-    if (!hasLocationFilter) {
-      map.fitBounds(VIETNAM_BOUNDS, { padding: [20, 20], maxZoom: 6 });
-      return;
+    if (leafletMap.current) {
+      fitMapBounds(leafletMap.current, latestPointsRef.current, school, hasLocationFilter);
     }
-
-    const pts = latestPointsRef.current;
-    if (pts.length === 0) {
-      map.fitBounds(VIETNAM_BOUNDS, { padding: [20, 20], maxZoom: 6 });
-      return;
-    }
-
-    const validLatLngs: [number, number][] = pts.map((p) => [p.latitude, p.longitude]);
-    if (validLatLngs.length === 1 && validLatLngs[0]) {
-      map.setView(validLatLngs[0], 14);
-    } else if (validLatLngs.length > 1) {
-      const bounds = L.latLngBounds(validLatLngs);
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-    }
-  }, [hasLocationFilter]);
+  }, [hasLocationFilter, school]);
 
   // Initialize map instance once
   useEffect(() => {
@@ -164,9 +147,17 @@ export function ListingMap({
       map.remove();
       leafletMap.current = null;
       clusterGroup.current = null;
+      schoolLayerGroup.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Update school layer when chosen school or radius changes
+  useEffect(() => {
+    if (leafletMap.current) {
+      renderSchoolLayer(leafletMap.current, schoolLayerGroup, school, radiusKm);
+    }
+  }, [school, radiusKm]);
 
   // Update markers and fit bounds
   useEffect(() => {
@@ -213,13 +204,13 @@ export function ListingMap({
       clusterGroup.current.addLayer(marker);
     }
 
-    // Fit bounds only when the listings set or location filter actually changes
-    const filterKey = `${listingsKey}:${hasLocationFilter ? "loc" : "country"}`;
+    // Fit bounds only when listings set, location filter, or school actually changes
+    const filterKey = `${listingsKey}:${hasLocationFilter ? "loc" : "country"}:${school?.id ?? ""}`;
     if (prevListingsKey.current !== filterKey) {
       prevListingsKey.current = filterKey;
       fitBoundsToPoints();
     }
-  }, [points, listingsKey, selectedId, onSelect, onHover, hasLocationFilter, fitBoundsToPoints]);
+  }, [points, listingsKey, selectedId, onSelect, onHover, hasLocationFilter, school, fitBoundsToPoints]);
 
   return (
     <div
