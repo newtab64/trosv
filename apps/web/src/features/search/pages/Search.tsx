@@ -21,6 +21,9 @@ export default function Search() {
   const toggleFavorite = useFavoriteToggle(search.setListings);
   const toggleMobileTab = () => {
     setMobileTab((t) => (t === "list" ? "map" : "list"));
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 100);
   };
 
   const chips = useMemo(() => buildFilterChips(search.filters, search, search), [search]);

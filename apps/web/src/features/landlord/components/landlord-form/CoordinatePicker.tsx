@@ -41,13 +41,20 @@ function usePinMap(
     const el = containerRef.current;
     let map: LeafletMap | null = null;
     let active = true;
+    let ro: ResizeObserver | null = null;
 
     void import("leaflet").then((L) => {
       if (!active || !el) return;
       const created = L.map(el).setView(START_VIEW, START_ZOOM);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      L.tileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+        attribution: '&copy; Google Maps',
+        maxZoom: 20,
+        subdomains: ["mt0", "mt1", "mt2", "mt3"],
       }).addTo(created);
+      ro = new ResizeObserver(() => {
+        created.invalidateSize();
+      });
+      ro.observe(el);
       const marker: Marker = L.marker(START_VIEW, { draggable: true });
       const place = (la: number, ln: number): void => {
         marker.setLatLng([la, ln]);
@@ -78,6 +85,7 @@ function usePinMap(
 
     return () => {
       active = false;
+      ro?.disconnect();
       syncRef.current = null;
       map?.remove();
       map = null;

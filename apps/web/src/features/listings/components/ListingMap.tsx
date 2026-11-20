@@ -16,6 +16,12 @@ const VIETNAM_BOUNDS: [[number, number], [number, number]] = [
   [8.5, 102.1], // Cà Mau / Nam Bộ
   [23.4, 109.5], // Hà Giang / Bắc Bộ
 ];
+const GOOGLE_MAPS_TILES_URL = "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+const GOOGLE_MAPS_TILES_OPTIONS: L.TileLayerOptions = {
+  attribution: "&copy; Google Maps",
+  maxZoom: 20,
+  subdomains: ["mt0", "mt1", "mt2", "mt3"],
+};
 
 export interface ListingMapProps {
   listings: Listing[];
@@ -137,9 +143,7 @@ export function ListingMap({
       map.setView(DEFAULT_CENTER, 5);
     }
     leafletMap.current = map;
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    L.tileLayer(GOOGLE_MAPS_TILES_URL, GOOGLE_MAPS_TILES_OPTIONS).addTo(map);
 
     setReady(true);
 
