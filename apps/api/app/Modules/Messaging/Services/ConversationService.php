@@ -11,8 +11,8 @@ use App\Modules\Messaging\Models\Message;
 use App\Shared\Support\StoragePath;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -25,34 +25,33 @@ class ConversationService
      */
     public function findOrCreateConversation(int $userAId, int $userBId, ?int $listingId = null): array
     {
-        $pair = fn () => Conversation::where(function ($q) use ($userAId, $userBId) {
+        $conversation = Conversation::where(function ($q) use ($userAId, $userBId) {
             $q->where('student_id', $userAId)->where('landlord_id', $userBId);
         })->orWhere(function ($q) use ($userAId, $userBId) {
             $q->where('student_id', $userBId)->where('landlord_id', $userAId);
-        });
+        })->firstOrCreate([], [
+            'student_id' => $userAId,
+            'landlord_id' => $userBId,
+            'listing_id' => $listingId,
+        ]);
 
-        $conversation = $pair()->first();
+        // Laravel retries the lookup after a unique collision, using a savepoint
+        // when called inside startListingConversation's PostgreSQL transaction.
+        $wasCreated = $conversation->wasRecentlyCreated;
 
-        if (! $conversation) {
-            try {
-                $conversation = Conversation::create([
-                    'student_id' => $userAId,
-                    'landlord_id' => $userBId,
-                    'listing_id' => $listingId,
-                ]);
+        if ($listingId !== null) {
+            $listingIds = array_unique(array_filter([$conversation->listing_id, $listingId]));
+            DB::table('conversation_listing')->insertOrIgnore(array_values(array_map(
+                fn (int $id) => ['conversation_id' => $conversation->id, 'listing_id' => $id],
+                $listingIds,
+            )));
 
-                return [$conversation, true];
-            } catch (UniqueConstraintViolationException) {
-                // Double-click race: the other request created the pair first.
-                $conversation = $pair()->firstOrFail();
+            if ($conversation->listing_id !== $listingId) {
+                $conversation->update(['listing_id' => $listingId]);
             }
         }
 
-        if ($listingId !== null && $conversation->listing_id !== $listingId) {
-            $conversation->update(['listing_id' => $listingId]);
-        }
-
-        return [$conversation, false];
+        return [$conversation, $wasCreated];
     }
 
     /**
@@ -62,11 +61,11 @@ class ConversationService
      */
     public function startListingConversation(User $student, Listing $listing): array
     {
-        [$conversation, $wasCreated] = $this->findOrCreateConversation(
+        [$conversation, $wasCreated] = DB::transaction(fn () => $this->findOrCreateConversation(
             $student->id,
             $listing->user_id,
             $listing->id
-        );
+        ));
 
         $this->sendRoomLinkIfNecessary($conversation, $student, $listing);
 
@@ -138,13 +137,19 @@ class ConversationService
     public function sendRoomLinkIfNecessary(Conversation $conversation, User $student, Listing $listing): void
     {
         $roomPath = "/rooms/{$listing->id}";
-        $recentlySent = $conversation->messages()
-            ->where('sender_id', $student->id)
-            ->where('body', $roomPath)
-            ->where('created_at', '>=', now()->subMinutes(15))
-            ->exists();
+        $messages = DB::transaction(function () use ($conversation, $student, $roomPath) {
+            // Serialize the check and both inserts for simultaneous contacts.
+            $conversation = Conversation::query()->lockForUpdate()->findOrFail($conversation->id);
+            $recentlySent = $conversation->messages()
+                ->where('sender_id', $student->id)
+                ->where('body', $roomPath)
+                ->where('created_at', '>=', now()->subMinutes(15))
+                ->exists();
 
-        if (! $recentlySent) {
+            if ($recentlySent) {
+                return [];
+            }
+
             $msg1 = $conversation->messages()->create([
                 'sender_id' => $student->id,
                 'body' => 'Chào bạn, mình quan tâm đến phòng trọ này:',
@@ -154,8 +159,12 @@ class ConversationService
                 'body' => $roomPath,
             ]);
             $conversation->touch();
-            rescue(fn () => event(new MessageSent($msg1->load(['sender:id', 'conversation']))), report: false);
-            rescue(fn () => event(new MessageSent($msg2->load(['sender:id', 'conversation']))), report: false);
+
+            return [$msg1, $msg2];
+        });
+
+        foreach ($messages as $message) {
+            rescue(fn () => event(new MessageSent($message->load(['sender:id', 'conversation']))), report: false);
         }
     }
 

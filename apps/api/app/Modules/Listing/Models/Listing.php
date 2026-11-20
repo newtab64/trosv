@@ -126,6 +126,28 @@ class Listing extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    /** @return BelongsToMany<Conversation, $this> */
+    public function contactedConversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_listing');
+    }
+
+    /** Shared chat for a student who contacted this particular room. */
+    public function conversationIdForStudent(int $studentId): ?int
+    {
+        $id = $this->contactedConversations()
+            ->where('student_id', $studentId)
+            ->where('landlord_id', $this->user_id)
+            ->value('conversations.id')
+            // Older records and seed data may only have the current room link.
+            ?? $this->conversations()
+                ->where('student_id', $studentId)
+                ->where('landlord_id', $this->user_id)
+                ->value('id');
+
+        return is_numeric($id) ? (int) $id : null;
+    }
+
     /**
      * Students who favorited this listing (pivot table favorites).
      *
