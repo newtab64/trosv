@@ -15,7 +15,7 @@ const LABEL_CLASS = "flex flex-col gap-1 text-xs font-medium text-ink-2";
 /** "Gần trường": city, ward, then the schools in that ward, then a radius. */
 export function NearSchoolPill({ search }: { search: SearchState }) {
   const { city_id: cityId, ward_id: wardId, school_id: schoolId, max_km: maxKm } = search.filters;
-  const schools = schoolsFor(search.schools, { cityId, wardId });
+  const schools = schoolsFor(search.schools, { cityId, wardId }, schoolId);
 
   return (
     <FilterPill
@@ -37,7 +37,7 @@ export function NearSchoolPill({ search }: { search: SearchState }) {
               onChange={(e) => {
                 search.setSchool(e.target.value);
               }}
-              disabled={wardId === ""}
+              disabled={cityId === ""}
               className={SELECT_FIELD_CLASS}
             >
               <option value="">{schoolPlaceholder(cityId, wardId)}</option>

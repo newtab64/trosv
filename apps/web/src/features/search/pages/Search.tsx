@@ -29,6 +29,10 @@ export default function Search() {
   }, []);
   const totalCount = search.meta?.total ?? search.listings.length;
   const area = areaName(search.filters, search);
+  const emptyHint =
+    search.filters.ward_id !== "" && search.filters.school_id !== ""
+      ? "Trường và phường đang chọn có thể quá xa nhau — bỏ lọc trường hoặc chọn bán kính lớn hơn."
+      : undefined;
 
   return (
     <div className="flex min-h-[calc(100svh-var(--nav-h))] flex-col bg-paper">
@@ -96,6 +100,7 @@ export default function Search() {
               void toggleFavorite(l);
             }}
             onResetFilters={search.resetFilters}
+            emptyHint={emptyHint}
             wide={mapHidden}
           />
           <Pagination
