@@ -579,13 +579,14 @@ test.describe("thread scrolling", () => {
             mine: true,
             minutesAgo: 30,
           },
-          { id: 31, sender_id: user.id, body: "/rooms/48", mine: true, minutesAgo: 30 },
+          { id: 31, sender_id: user.id, body: "/rooms/1", mine: true, minutesAgo: 30 },
           { id: 32, sender_id: 101, body: "Phòng vẫn còn nhé em.", mine: false, minutesAgo: 5 },
         ],
       },
     });
     // The room card grows the thread once its data arrives, after the first scroll.
-    await page.route("http://localhost:8000/api/listings/48", async (route) => {
+    // A real seeded room (ids 1-22 exist in every seed); its preview card is the late content.
+    await page.route("http://localhost:8000/api/listings/1", async (route) => {
       await new Promise((r) => setTimeout(r, 700));
       await route.continue();
     });
@@ -613,11 +614,11 @@ test.describe("thread scrolling", () => {
       threads: {
         1: [
           ...filler,
-          { id: 40, sender_id: user.id, body: "/rooms/48", mine: true, minutesAgo: 10 },
+          { id: 40, sender_id: user.id, body: "/rooms/1", mine: true, minutesAgo: 10 },
         ],
       },
     });
-    await page.route("http://localhost:8000/api/listings/48", async (route) => {
+    await page.route("http://localhost:8000/api/listings/1", async (route) => {
       await new Promise((r) => setTimeout(r, 900));
       await route.continue();
     });

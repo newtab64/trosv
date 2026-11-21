@@ -7,9 +7,16 @@ import "@/features/listings/components/leaflet-pins.css";
 
 /*
   Price pins: white pills with 1px ink border, small tail, tabular
-  numbers. Hover/selected = plate. Clusters: ink circles with paper
-  numbers. Warm tiles via .leaflet-tile-pane filter (styles.css).
+  numbers. Hover/selected = plate. Clusters: red location pins with the
+  count in the head. Warm tiles via .leaflet-tile-pane filter (styles.css).
+
+  Both icons are anchored at their tip: Leaflet scales the map around the
+  anchor while zooming, so a tip that is not on the anchor seems to slide.
 */
+
+/* Red location pin, 34x46, tip at the bottom centre (17, 46). */
+const CLUSTER_PIN_SIZE: [number, number] = [34, 46];
+const CLUSTER_PIN_SVG = `<svg data-tip viewBox="0 0 34 46" width="34" height="46" aria-hidden="true"><path fill="#EA4335" stroke="#B31412" stroke-width="1.5" d="M17 45C17 45 2 27.5 2 16.5a15 15 0 0 1 30 0C32 27.5 17 45 17 45Z"/></svg>`;
 
 const DEFAULT_CENTER: [number, number] = [16.0471, 107.5]; // Việt Nam trung tâm
 const VIETNAM_BOUNDS: [[number, number], [number, number]] = [
@@ -28,17 +35,18 @@ export interface ListingMapProps {
   scrollWheelZoom?: boolean;
 }
 
-/* Cluster icon: ink circle with paper number. */
+/* Cluster icon: red location pin with the count in its head. */
 function makeClusterIcon(cluster: { getChildCount: () => number }): L.DivIcon {
   const count = cluster.getChildCount();
   return L.divIcon({
-    html: `<span class="trosv-cluster" aria-hidden="true">${count}</span>`,
+    html: `${CLUSTER_PIN_SVG}<span class="trosv-cluster" aria-hidden="true">${count}</span>`,
     className: "trosv-cluster-wrap",
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
+    iconSize: CLUSTER_PIN_SIZE,
+    iconAnchor: [CLUSTER_PIN_SIZE[0] / 2, CLUSTER_PIN_SIZE[1]],
   });
 }
 
+/* Zero-size icon anchored on the point; CSS lifts the pill so its tail tip sits on it. */
 export function makePinIcon(listing: Listing, selected: boolean): L.DivIcon {
   return L.divIcon({
     html: `<span
@@ -46,10 +54,10 @@ export function makePinIcon(listing: Listing, selected: boolean): L.DivIcon {
       role="button"
       tabindex="0"
       aria-label="${formatVnd(listing.price)} một tháng, ${listing.title.replace(/"/g, "&quot;")}"
-    >${formatVnd(listing.price)}</span>`,
+    >${formatVnd(listing.price)}<i class="trosv-pin-tail" data-tip aria-hidden="true"></i></span>`,
     className: "trosv-pin-wrap",
-    iconSize: [40, 40],
-    iconAnchor: [20, 22],
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
   });
 }
 
