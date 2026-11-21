@@ -8,7 +8,7 @@ import {
   useNavigate,
   useNavigationType,
 } from "react-router-dom";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ROUTES, route } from "@/shared/constants/routes";
 import {
@@ -28,6 +28,62 @@ import { useUnreadCount } from "@/features/messaging/hooks/useUnreadCount";
 import { AiChatWidget } from "@/features/ai/components/AiChatWidget";
 
 /* ---------- Header ---------- */
+
+const STUDENT_NAV_ITEMS = [
+  { to: ROUTES.AI_ROOMMATES, label: "Tìm bạn cùng phòng" },
+  { to: ROUTES.AI_AREA_SUGGESTIONS, label: "Gợi ý khu vực" },
+] as const;
+
+function MobileNavigation({ role }: { role: string | undefined }) {
+  const [open, setOpen] = React.useState(false);
+  const items: { to: string; label: string }[] = [
+    { to: ROUTES.ROOMS, label: role === "landlord" ? "Xem phòng" : "Tìm phòng" },
+  ];
+  if (role === "student") {
+    items.push(...STUDENT_NAV_ITEMS);
+  } else if (role === "landlord") {
+    items.push(
+      { to: ROUTES.LANDLORD, label: "Quản lý tin đăng" },
+      { to: ROUTES.LANDLORD_NEW, label: "Đăng tin mới" },
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 lg:hidden"
+          aria-label="Menu điều hướng"
+        >
+          <Menu className="size-5" aria-hidden />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={8}
+        data-testid="mobile-nav-content"
+        className="z-50 min-w-52 max-w-[calc(100vw-1.5rem)] rounded-xl border border-line bg-card p-1.5 shadow-pop lg:hidden"
+      >
+        <div className="flex flex-col gap-0.5">
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => {
+                setOpen(false);
+              }}
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-tint"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function Header() {
   const { user, logout } = useAuth();
@@ -113,7 +169,8 @@ function Header() {
       </div>
 
       {/* Center: wordmark (Zillow puts the logo mid-header on desktop). */}
-      <div className="flex items-center gap-3 justify-self-start lg:justify-self-center">
+      <div className="flex items-center gap-2 justify-self-start lg:justify-self-center">
+        <MobileNavigation role={user?.role} />
         <Link to={ROUTES.HOME} className="flex items-center" aria-label="TROSV trang chủ">
           <img src="/trosv-logo.svg" alt="TROSV" className="trosv-logo h-6 w-auto" />
         </Link>
