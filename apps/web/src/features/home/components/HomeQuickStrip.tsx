@@ -3,6 +3,7 @@ import { GraduationCap, MapPin, MessageCircle, Sparkles, Users } from "lucide-re
 import { ROUTES } from "@/shared/constants/routes";
 import { cn } from "@/shared/lib/utils";
 import type { School } from "@/shared/types/api";
+import { schoolSearchHref } from "@/features/search/lib/searchFilters";
 
 const FEATURES = [
   {
@@ -50,7 +51,7 @@ export function HomeQuickStrip({ schools }: { schools: School[] }) {
         {schools.slice(0, 6).map((s) => (
           <Link
             key={s.id}
-            to={`${ROUTES.ROOMS}?school_id=${s.id}`}
+            to={schoolSearchHref(s.id)}
             className="flex-none rounded-full border border-line-strong bg-card px-3.5 py-1.5 text-[13.5px] font-semibold text-ink transition-colors hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plate"
           >
             {s.name}

@@ -5,7 +5,16 @@ import { cn } from "@/shared/lib/utils";
 import { SORT_OPTIONS, sortLabel } from "../lib/filterChips";
 
 /** "Sắp xếp: Mới nhất ▾" dropdown. */
-export function SortMenu({ sort, onChange }: { sort: string; onChange: (sort: string) => void }) {
+export function SortMenu({
+  sort,
+  onChange,
+  hasSchool = false,
+}: {
+  sort: string;
+  onChange: (sort: string) => void;
+  /** "Gần trường nhất" needs a school to measure from. */
+  hasSchool?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const closedByScroll = useRef(false);
 
@@ -54,7 +63,7 @@ export function SortMenu({ sort, onChange }: { sort: string; onChange: (sort: st
             if (closedByScroll.current) e.preventDefault();
           }}
         >
-          {SORT_OPTIONS.map((opt) => (
+          {SORT_OPTIONS.filter((opt) => hasSchool || opt.value !== "distance").map((opt) => (
             <button
               key={opt.value}
               type="button"

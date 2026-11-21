@@ -6,7 +6,10 @@ import {
   filtersToApiParams,
   filtersToUrlParams,
   withCity,
+  withSchool,
   withWard,
+  DEFAULT_SCHOOL_RADIUS_KM,
+  schoolSearchHref,
   type ListingFilters,
 } from "./searchFilters";
 
@@ -128,5 +131,36 @@ describe("cascade", () => {
     withCity(set, "9");
     withWard(set, "8");
     expect(set.school_id).toBe("3");
+  });
+});
+
+describe("withSchool", () => {
+  it("picking a school filters to 3 km around it and sorts nearest first", () => {
+    expect(withSchool(filters(), "41")).toMatchObject({
+      school_id: "41",
+      max_km: DEFAULT_SCHOOL_RADIUS_KM,
+      sort: "distance",
+    });
+    expect(DEFAULT_SCHOOL_RADIUS_KM).toBe("3");
+  });
+
+  it("keeps a radius the user already chose", () => {
+    expect(withSchool(filters({ max_km: "1" }), "41").max_km).toBe("1");
+  });
+
+  it("clearing the school drops the radius and the distance sort", () => {
+    const set = filters({ school_id: "41", max_km: "3", sort: "distance" });
+    expect(withSchool(set, "")).toMatchObject({ school_id: "", max_km: "", sort: "newest" });
+  });
+
+  it("clearing the school keeps a sort that is not about distance", () => {
+    const set = filters({ school_id: "41", max_km: "3", sort: "price_asc" });
+    expect(withSchool(set, "").sort).toBe("price_asc");
+  });
+});
+
+describe("schoolSearchHref", () => {
+  it("links to rooms within 3 km of the school, nearest first", () => {
+    expect(schoolSearchHref(41)).toBe("/rooms?school_id=41&max_km=3&sort=distance");
   });
 });

@@ -28,7 +28,12 @@ const refs = {
   schools: [{ id: 5, name: "ĐH Bách Khoa" }],
 };
 
-const actions = () => ({ setFilter: vi.fn(), setCity: vi.fn(), setWard: vi.fn() });
+const actions = () => ({
+  setFilter: vi.fn(),
+  setCity: vi.fn(),
+  setWard: vi.fn(),
+  setSchool: vi.fn(),
+});
 const chips = (over: Partial<ListingFilters>, a = actions()) =>
   buildFilterChips({ ...NO_FILTERS, ...over }, refs, a);
 
@@ -84,12 +89,13 @@ describe("buildFilterChips", () => {
     }
     expect(a.setCity).toHaveBeenCalledWith("");
     expect(a.setWard).toHaveBeenCalledWith("");
+    // The school chip also drops its radius and distance sort (setSchool does both).
+    expect(a.setSchool).toHaveBeenCalledWith("");
     expect(a.setFilter.mock.calls).toEqual([
       ["q", ""],
       ["type", ""],
       ["price_min", ""],
       ["price_max", ""],
-      ["school_id", ""],
     ]);
   });
 });
@@ -113,7 +119,7 @@ describe("sortLabel", () => {
   });
 
   it("falls back to the default for an unknown sort", () => {
-    expect(sortLabel("distance")).toBe("Mới nhất");
+    expect(sortLabel("bogus")).toBe("Mới nhất");
   });
 });
 

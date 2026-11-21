@@ -22,8 +22,7 @@ export function NearSchoolPill({ search }: { search: SearchState }) {
       label="Gần trường"
       active={schoolId !== "" || maxKm !== ""}
       onClear={() => {
-        search.setFilter("school_id", "");
-        search.setFilter("max_km", "");
+        search.setSchool("");
       }}
     >
       <div className="flex flex-col gap-3 min-w-[250px]">
@@ -36,7 +35,7 @@ export function NearSchoolPill({ search }: { search: SearchState }) {
               id="filter-school"
               value={schoolId}
               onChange={(e) => {
-                search.setFilter("school_id", e.target.value);
+                search.setSchool(e.target.value);
               }}
               disabled={wardId === ""}
               className={SELECT_FIELD_CLASS}
