@@ -56,6 +56,12 @@ describe("schoolsFor", () => {
   it("a ward that no school belongs to gives an empty list", () => {
     expect(schoolsFor(schools, { cityId: "", wardId: "99" })).toEqual([]);
   });
+
+  it("keeps the selected school visible after the ward changes", () => {
+    expect(schoolsFor(schools, { cityId: "20", wardId: "1" }, "2").map((s) => s.id)).toEqual([
+      2, 1,
+    ]);
+  });
 });
 
 describe("placeholders", () => {
@@ -63,7 +69,7 @@ describe("placeholders", () => {
     expect(wardPlaceholder("")).toBe("Chọn Tỉnh/TP trước");
     expect(wardPlaceholder("10")).toBe("Tất cả phường");
     expect(schoolPlaceholder("", "")).toBe("Chọn Tỉnh/TP trước");
-    expect(schoolPlaceholder("10", "")).toBe("Chọn Phường trước");
+    expect(schoolPlaceholder("10", "")).toBe("Chọn trường trong tỉnh/TP này");
     expect(schoolPlaceholder("10", "1")).toBe("Chọn trường trong phường này");
   });
 });

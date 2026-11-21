@@ -13,6 +13,8 @@ export interface ListingResultsProps {
   onHover: (id: number | null) => void;
   onFavoriteToggle: (listing: Listing) => void;
   onResetFilters: () => void;
+  /** Extra explanation when the empty result is expected (e.g. a far school). */
+  emptyHint?: string | undefined;
   /** No map beside the list (desktop): use the full width with more columns. */
   wide?: boolean;
 }
@@ -25,6 +27,7 @@ export function ListingResults({
   onHover,
   onFavoriteToggle,
   onResetFilters,
+  emptyHint,
   wide = false,
 }: ListingResultsProps) {
   const grid = cn("grid grid-cols-1 gap-4 sm:grid-cols-2", wide && "lg:grid-cols-3 xl:grid-cols-4");
@@ -51,7 +54,7 @@ export function ListingResults({
         <EmptyState
           illustration={<SearchEmptyIllustration />}
           title="Chưa có phòng nào khớp bộ lọc"
-          description="Thử nới khoảng giá hoặc chọn trường khác để xem thêm phòng."
+          description={emptyHint ?? "Thử nới khoảng giá hoặc chọn trường khác để xem thêm phòng."}
           action={
             <Button variant="outline" onClick={onResetFilters}>
               Xóa bộ lọc

@@ -3,13 +3,15 @@ import { expect, test } from "@playwright/test";
 /**
  * Regression guard: cascade chiều dương trên /rooms - phuong TRUOC, truong
  * SAU. Danh sách "Gần trường" chỉ hiện trường thuộc phường đã chọn ở
- * "Bộ lọc" (school.ward.id từ API); đổi phường thì reset trường + bán kính.
+ * "Bộ lọc" (school.ward.id từ API); đổi phường thì GIỮ trường + bán kính.
  *
  * Assert phần lọc ở LỚP API (response /listings) - không assert theo text
  * card vì seeder bóc tên phường vào title, text-assert sẽ pass ảo.
  */
 test.describe("rooms ward -> school cascade", () => {
-  test("school list narrows to the chosen ward and resets on ward change", async ({ page }) => {
+  test("school list narrows to the chosen ward and keeps the school on ward change", async ({
+    page,
+  }) => {
     await page.goto("/rooms");
 
     // City + ward cascade lives in the "Bộ lọc" pill popover.
@@ -61,19 +63,49 @@ test.describe("rooms ward -> school cascade", () => {
     }
 
     // Radius select appears only after a school is chosen.
-    await expect(page.locator("#filter-radius")).toBeVisible();
+    const radiusSelect = page.locator("#filter-radius");
+    await expect(radiusSelect).toBeVisible();
+    await radiusSelect.selectOption("2");
     await page.keyboard.press("Escape");
 
-    // Changing the ward resets school + radius (cascade hygiene).
+    // Clearing the ward keeps the school and radius so the search can cross
+    // ward lines: the request must not carry ward_id.
     await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
-    await wardSelect.selectOption({ label: "Phường Chợ Quán" });
+    const listingsAcrossWards = page.waitForResponse(
+      (r) => r.url().includes("/listings") && r.url().includes("school_id="),
+    );
+    await wardSelect.selectOption({ label: "Tất cả phường" });
+    const acrossWards = await listingsAcrossWards;
+    const acrossUrl = new URL(acrossWards.url());
+    expect(acrossUrl.searchParams.get("school_id")).toBeTruthy();
+    expect(acrossUrl.searchParams.get("max_km")).toBe("2");
+    expect(acrossUrl.searchParams.get("ward_id")).toBeNull();
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Gần trường", exact: true }).click();
-    await expect(schoolSelect).toHaveValue("");
-    for (const name of ["HCMUS", "HCMUE", "SGU"]) {
+    expect(uitVal).toBeTruthy();
+    await expect(schoolSelect).toHaveValue(uitVal ?? "");
+    await expect(radiusSelect).toHaveValue("2");
+    await page.keyboard.press("Escape");
+
+    // Changing the ward keeps school + radius, and the selected school stays
+    // in the list even though it belongs to the previous ward.
+    await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
+    const listingsWithNewWard = page.waitForResponse(
+      (r) => r.url().includes("/listings") && r.url().includes("school_id="),
+    );
+    await wardSelect.selectOption({ label: "Phường Chợ Quán" });
+    const newWard = await listingsWithNewWard;
+    const newWardUrl = new URL(newWard.url());
+    expect(newWardUrl.searchParams.get("school_id")).toBeTruthy();
+    expect(newWardUrl.searchParams.get("max_km")).toBe("2");
+    expect(newWardUrl.searchParams.get("ward_id")).toBeTruthy();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Gần trường", exact: true }).click();
+    await expect(schoolSelect).toHaveValue(uitVal ?? "");
+    await expect(radiusSelect).toHaveValue("2");
+    for (const name of ["HCMUS", "HCMUE", "SGU", "UIT"]) {
       await expect(schoolSelect.locator(`option:has-text("${name}")`)).toHaveCount(1);
     }
-    await expect(schoolSelect.locator('option:has-text("UIT")')).toHaveCount(0);
     await page.keyboard.press("Escape");
 
     // Reset returns to the pristine cascade (ward disabled again).

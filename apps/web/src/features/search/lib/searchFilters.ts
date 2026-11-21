@@ -126,7 +126,10 @@ export function schoolSearchHref(schoolId: number | string): string {
   return `/rooms?school_id=${String(schoolId)}&max_km=${DEFAULT_SCHOOL_RADIUS_KM}&sort=distance`;
 }
 
-/** Another ward: the school list is per ward, so the school and radius reset. */
+/**
+ * Another ward: the school and its radius stay - they are independent filters,
+ * and the radius may cross ward lines. A far ward simply yields no rooms.
+ */
 export function withWard(filters: ListingFilters, wardId: string): ListingFilters {
-  return { ...filters, ward_id: wardId, school_id: "", max_km: "" };
+  return { ...filters, ward_id: wardId };
 }
