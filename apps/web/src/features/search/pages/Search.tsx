@@ -60,6 +60,7 @@ export default function Search() {
               }}
             />
             <SortMenu
+              hasSchool={search.filters.school_id !== ""}
               sort={search.filters.sort}
               onChange={(sort) => {
                 search.setFilter("sort", sort);

@@ -1,7 +1,7 @@
 import { Map as MapIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES, route } from "@/shared/constants/routes";
-import { ListingMap } from "@/features/listings/components/ListingMap";
+import { ListingMap, type SchoolArea } from "@/features/listings/components/ListingMap";
 import { cn } from "@/shared/lib/utils";
 import type { SearchState } from "../lib/types";
 import type { MobileTab } from "./MobileViewToggle";
@@ -49,6 +49,16 @@ export function SearchMapPane({
   onHover,
 }: SearchMapPaneProps) {
   const navigate = useNavigate();
+  const school = search.schools.find((s) => String(s.id) === search.filters.school_id);
+  const schoolArea: SchoolArea | null =
+    school && school.latitude != null && school.longitude != null
+      ? {
+          name: school.name,
+          latitude: school.latitude,
+          longitude: school.longitude,
+          radiusKm: Number(search.filters.max_km) || null,
+        }
+      : null;
   // Not mounted at all when neither applies, so a hidden map loads no tiles.
   if (hidden && mobileTab === "list") return null;
   return (
@@ -76,6 +86,7 @@ export function SearchMapPane({
           hasLocationFilter={Boolean(
             search.filters.city_id || search.filters.ward_id || search.filters.school_id,
           )}
+          schoolArea={schoolArea}
           ariaLabel="Bản đồ phòng trọ"
         />
       </div>

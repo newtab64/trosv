@@ -11,6 +11,8 @@ export const SORT_OPTIONS = [
   { value: "price_asc", label: "Giá thấp trước" },
   { value: "price_desc", label: "Giá cao trước" },
   { value: "rating", label: "Đánh giá cao trước" },
+  // Only offered while a school is picked: the distance is to that school.
+  { value: "distance", label: "Gần trường nhất" },
 ] as const;
 
 export const TYPE_OPTIONS = [
@@ -35,6 +37,7 @@ export interface ChipActions {
   setFilter: (key: keyof ListingFilters, value: string) => void;
   setCity: (id: string) => void;
   setWard: (id: string) => void;
+  setSchool: (id: string) => void;
 }
 
 export interface FilterChip {
@@ -88,7 +91,7 @@ export function buildFilterChips(
     },
   );
   add("school_id", findName(refs.schools, filters.school_id), () => {
-    actions.setFilter("school_id", "");
+    actions.setSchool("");
   });
   return chips;
 }

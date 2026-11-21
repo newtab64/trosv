@@ -15,6 +15,7 @@ import { HomeQuickStrip } from "../components/HomeQuickStrip";
 import { NewestRooms } from "../components/NewestRooms";
 import { TypedWord } from "../components/TypedWord";
 import { Search as SearchIcon, GraduationCap, MapPin } from "lucide-react";
+import { schoolSearchHref } from "@/features/search/lib/searchFilters";
 
 function HeroSearch({ cities, schools }: { cities: City[]; schools: School[] }) {
   const [q, setQ] = useState("");
@@ -73,7 +74,7 @@ function HeroSearch({ cities, schools }: { cities: City[]; schools: School[] }) 
                 {matchedSchools.map((s) => (
                   <Link
                     key={s.id}
-                    to={`${ROUTES.ROOMS}?school_id=${s.id}`}
+                    to={schoolSearchHref(s.id)}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink hover:bg-tint"
                     onClick={() => {
                       setQ("");

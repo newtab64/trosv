@@ -1,5 +1,5 @@
 import { formatVnd } from "@/shared/lib/format";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import L from "leaflet";
 import "leaflet.markercluster";
 import type { Listing } from "@/shared/types/api";
@@ -33,7 +33,18 @@ export interface ListingMapProps {
   hasLocationFilter?: boolean;
   /** Wheel zoom hijacks page scroll; embedded maps turn it off. */
   scrollWheelZoom?: boolean;
+  /** School being searched around: a dot at the school and, with a radius, a blue circle. */
+  schoolArea?: SchoolArea | null;
 }
+
+export interface SchoolArea {
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusKm: number | null;
+}
+
+const SCHOOL_BLUE = "#1A73E8";
 
 /* Cluster icon: red location pin with the count in its head. */
 function makeClusterIcon(cluster: { getChildCount: () => number }): L.DivIcon {
@@ -66,6 +77,72 @@ if (typeof window !== "undefined" && !(window as unknown as { L?: typeof L }).L)
   (window as unknown as { L: typeof L }).L = L;
 }
 
+/* Cluster group from leaflet.markercluster (on L or window.L); a plain group if it is missing. */
+function makeClusterGroup(): L.MarkerClusterGroup | L.FeatureGroup {
+  const clusterFactory =
+    (L as unknown as { markerClusterGroup?: (opts: unknown) => L.MarkerClusterGroup })
+      .markerClusterGroup ||
+    (typeof window !== "undefined" &&
+      (
+        window as unknown as {
+          L?: { markerClusterGroup?: (opts: unknown) => L.MarkerClusterGroup };
+        }
+      ).L?.markerClusterGroup);
+  if (typeof clusterFactory !== "function") return L.featureGroup();
+  return clusterFactory({
+    iconCreateFunction: makeClusterIcon,
+    showCoverageOnHover: false,
+    maxClusterRadius: 55,
+  });
+}
+
+/** School dot and radius circle; redrawn (and the map refitted) when the school or radius changes. */
+function useSchoolLayer(
+  leafletMap: MutableRefObject<L.Map | null>,
+  schoolArea: SchoolArea | null,
+  ready: boolean,
+  refit: () => void,
+): void {
+  const schoolLayer = useRef<L.LayerGroup | null>(null);
+  const schoolKey = schoolArea
+    ? `${String(schoolArea.latitude)},${String(schoolArea.longitude)},${String(schoolArea.radiusKm)}`
+    : "";
+  useEffect(() => {
+    const map = leafletMap.current;
+    if (!map) return;
+    schoolLayer.current?.remove();
+    schoolLayer.current = null;
+    if (!schoolArea) return;
+
+    const centre: [number, number] = [schoolArea.latitude, schoolArea.longitude];
+    const layer = L.layerGroup().addTo(map);
+    if (schoolArea.radiusKm) {
+      L.circle(centre, {
+        radius: schoolArea.radiusKm * 1000,
+        className: "trosv-school-radius",
+        color: SCHOOL_BLUE,
+        weight: 1.5,
+        fillColor: SCHOOL_BLUE,
+        fillOpacity: 0.12,
+        interactive: false,
+      }).addTo(layer);
+    }
+    L.circleMarker(centre, {
+      radius: 7,
+      className: "trosv-school-center",
+      color: "#fff",
+      weight: 2,
+      fillColor: SCHOOL_BLUE,
+      fillOpacity: 1,
+    })
+      .bindTooltip(schoolArea.name)
+      .addTo(layer);
+    schoolLayer.current = layer;
+    refit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- schoolKey covers schoolArea
+  }, [schoolKey, ready, refit]);
+}
+
 export function ListingMap({
   listings,
   selectedId,
@@ -74,11 +151,21 @@ export function ListingMap({
   ariaLabel = "Bản đồ phòng trọ",
   hasLocationFilter = false,
   scrollWheelZoom = true,
+  schoolArea = null,
 }: ListingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const clusterGroup = useRef<L.MarkerClusterGroup | L.FeatureGroup | null>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const prevListingsKey = useRef<string>("");
+  const { latitude: schoolLat, longitude: schoolLng, radiusKm } = schoolArea ?? {};
+  // The radius circle's box, so a school search frames the whole area, not only its rooms.
+  const schoolBounds = useMemo(
+    () =>
+      schoolLat != null && schoolLng != null && radiusKm
+        ? L.latLng(schoolLat, schoolLng).toBounds(radiusKm * 2000)
+        : null,
+    [schoolLat, schoolLng, radiusKm],
+  );
   const [ready, setReady] = useState(false);
 
   const points = useMemo(
@@ -118,6 +205,12 @@ export function ListingMap({
       return;
     }
 
+    // Searching around a school: show the whole radius, not just the rooms in it.
+    if (schoolBounds) {
+      map.fitBounds(schoolBounds, { padding: [20, 20] });
+      return;
+    }
+
     const pts = latestPointsRef.current;
     if (pts.length === 0) {
       map.fitBounds(VIETNAM_BOUNDS, { padding: [20, 20], maxZoom: 6 });
@@ -131,7 +224,7 @@ export function ListingMap({
       const bounds = L.latLngBounds(validLatLngs);
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
     }
-  }, [hasLocationFilter]);
+  }, [hasLocationFilter, schoolBounds]);
 
   // Initialize map instance once
   useEffect(() => {
@@ -181,27 +274,8 @@ export function ListingMap({
     const map = leafletMap.current;
     if (!map) return;
 
-    // Resolve cluster factory from L or window.L
-    const clusterFactory =
-      (L as unknown as { markerClusterGroup?: (opts: unknown) => L.MarkerClusterGroup })
-        .markerClusterGroup ||
-      (typeof window !== "undefined" &&
-        (
-          window as unknown as {
-            L?: { markerClusterGroup?: (opts: unknown) => L.MarkerClusterGroup };
-          }
-        ).L?.markerClusterGroup);
-
     if (!clusterGroup.current) {
-      if (typeof clusterFactory === "function") {
-        clusterGroup.current = clusterFactory({
-          iconCreateFunction: makeClusterIcon,
-          showCoverageOnHover: false,
-          maxClusterRadius: 55,
-        });
-      } else {
-        clusterGroup.current = L.featureGroup();
-      }
+      clusterGroup.current = makeClusterGroup();
       map.addLayer(clusterGroup.current);
     } else {
       clusterGroup.current.clearLayers();
@@ -229,6 +303,8 @@ export function ListingMap({
     }
   }, [points, listingsKey, selectedId, onSelect, onHover, hasLocationFilter, fitBoundsToPoints]);
 
+  useSchoolLayer(leafletMap, schoolArea, ready, fitBoundsToPoints);
+
   return (
     <div
       ref={containerRef}
@@ -237,6 +313,7 @@ export function ListingMap({
       className="h-full w-full"
       data-testid="map"
       data-ready={ready ? "true" : "false"}
+      data-school-radius-km={schoolArea?.radiusKm ?? undefined}
     />
   );
 }

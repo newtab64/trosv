@@ -97,6 +97,35 @@ export function withCity(filters: ListingFilters, cityId: string): ListingFilter
   return { ...filters, city_id: cityId, ward_id: "", school_id: "", max_km: "" };
 }
 
+/** Picking a school without a radius would only sort by distance; this is the radius it gets. */
+export const DEFAULT_SCHOOL_RADIUS_KM = "3";
+
+/**
+ * Another school: rooms within the chosen radius (3 km when none was chosen), nearest first.
+ * Clearing the school drops the radius and a distance sort, which mean nothing without it.
+ */
+export function withSchool(filters: ListingFilters, schoolId: string): ListingFilters {
+  if (schoolId === "") {
+    return {
+      ...filters,
+      school_id: "",
+      max_km: "",
+      sort: filters.sort === "distance" ? "newest" : filters.sort,
+    };
+  }
+  return {
+    ...filters,
+    school_id: schoolId,
+    max_km: filters.max_km || DEFAULT_SCHOOL_RADIUS_KM,
+    sort: "distance",
+  };
+}
+
+/** Link to the rooms around a school, as picking it in the "Gần trường" filter would show them. */
+export function schoolSearchHref(schoolId: number | string): string {
+  return `/rooms?school_id=${String(schoolId)}&max_km=${DEFAULT_SCHOOL_RADIUS_KM}&sort=distance`;
+}
+
 /** Another ward: the school list is per ward, so the school and radius reset. */
 export function withWard(filters: ListingFilters, wardId: string): ListingFilters {
   return { ...filters, ward_id: wardId, school_id: "", max_km: "" };

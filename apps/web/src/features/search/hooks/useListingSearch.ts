@@ -17,6 +17,7 @@ import {
   filtersToApiParams,
   filtersToUrlParams,
   withCity,
+  withSchool,
   withWard,
   type ListingFilters,
 } from "../lib/searchFilters";
@@ -115,6 +116,12 @@ export function useListingSearch() {
     setFilters((f) => withWard(f, wardId));
   };
 
+  // A school filters to a radius around it (3 km by default) and sorts nearest first.
+  const setSchool = (schoolId: string): void => {
+    setPage(1);
+    setFilters((f) => withSchool(f, schoolId));
+  };
+
   const toggleAmenity = (id: number): void => {
     setPage(1);
     setFilters((f) => ({ ...f, amenity_ids: toggleId(f.amenity_ids, id) }));
@@ -136,6 +143,7 @@ export function useListingSearch() {
     setFilter,
     setCity,
     setWard,
+    setSchool,
     toggleAmenity,
     resetFilters,
     // results
