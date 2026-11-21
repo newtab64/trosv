@@ -21,7 +21,7 @@ test.describe("header user dropdown", () => {
     // Login as the seeded student (the user button only renders when
     // logged in).
     await page.goto("/login");
-    await page.locator("#login-email").fill("student1@example.com");
+    await page.locator("#login-email").fill("student1@email.com");
     await page.locator("#login-password").fill("password");
     await page.getByRole("button", { name: "Đăng nhập" }).click();
     await expect(page.getByRole("button", { name: "Menu tài khoản" })).toBeVisible();

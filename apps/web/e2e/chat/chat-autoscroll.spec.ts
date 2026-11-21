@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("chat panel automatically opens at the latest message", async ({ page }) => {
   // 1. Log in
   await page.goto("/login");
-  await page.fill('input[type="email"]', "student1@example.com");
+  await page.fill('input[type="email"]', "student1@email.com");
   await page.fill('input[type="password"]', "password");
   await page.click('button[type="submit"]');
 
