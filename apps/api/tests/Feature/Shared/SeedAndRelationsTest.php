@@ -23,10 +23,9 @@ class SeedAndRelationsTest extends TestCase
         $this->artisan('db:seed', ['--force' => true])->assertExitCode(0);
 
         $this->assertDatabaseCount('users', 13);
-        $this->assertDatabaseCount('listings', 48);
-        // Sample image files need GD (bundled in the Docker image); without GD
-        // the seeder still seeds everything except the picture files.
-        $this->assertDatabaseCount('listing_images', extension_loaded('gd') ? 48 : 0);
+        $this->assertDatabaseCount('listings', 22);
+        // 22 real rooms, 88 WebP photos (database/seeders/images/rooms).
+        $this->assertDatabaseCount('listing_images', 88);
         $this->assertDatabaseCount('conversations', 6);
         $this->assertDatabaseCount('reviews', 4);
 
@@ -39,7 +38,7 @@ class SeedAndRelationsTest extends TestCase
         $this->assertTrue(Hash::check('password', $landlord->password));
 
         // Seeded prices stay in the 1.5M..12M VND range (including student houses).
-        $this->assertTrue(Listing::whereBetween('price', [1_500_000, 12_000_000])->count() === 48);
+        $this->assertTrue(Listing::whereBetween('price', [1_500_000, 12_000_000])->count() === 22);
     }
 
     public function test_hcmc_schools_are_pinned_to_wards(): void
