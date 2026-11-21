@@ -49,8 +49,8 @@ make up                 # khởi động container (hoặc COMPOSE="docker compo
 
 Dữ liệu demo: đặt `SEED_ON_BOOT=1` trong `.env`, hoặc chạy tay
 `docker compose exec backend php artisan migrate:fresh --seed --force`.
-Tài khoản demo (mật khẩu `password`): `student1@example.com` (sinh viên),
-`landlord1@example.com` (chủ nhà).
+Tài khoản demo (mật khẩu `password`): `student1@email.com` (sinh viên),
+`landlord1@email.com` (chủ nhà).
 
 Lệnh hay dùng (qua Makefile):
 

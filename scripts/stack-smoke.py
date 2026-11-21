@@ -322,8 +322,8 @@ def check_concurrency() -> None:
 
 def main() -> int:
     check_basics()
-    landlord = login("landlord1@example.com")
-    student = login("student1@example.com")
+    landlord = login("landlord1@email.com")
+    student = login("student1@email.com")
     if not check("demo logins work (database was seeded)", bool(landlord and student)):
         return 1
     status, _, data = api("GET", "/api/my/listings", landlord)

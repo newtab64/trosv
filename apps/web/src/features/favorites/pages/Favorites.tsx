@@ -9,7 +9,6 @@ import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/badge";
 import { PageHeader } from "@/shared/ui/page-header";
 import { EmptyState, ErrorState } from "@/shared/ui/empty-state";
-import { FavoriteEmptyIllustration } from "@/shared/ui/icons";
 import { ListingCard } from "@/features/listings/components/ListingCard";
 import { toast } from "@/shared/ui/toast";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
@@ -125,7 +124,7 @@ export default function Favorites() {
         {band}
         <div className="flex flex-1 items-center justify-center p-6">
           <EmptyState
-            illustration={<FavoriteEmptyIllustration />}
+            illustration={<FavoritesGateIllustration />}
             title="Bạn chưa lưu phòng nào"
             description="Nhấn vào biểu tượng trái tim ở mỗi phòng để lưu lại và so sánh sau."
             action={
