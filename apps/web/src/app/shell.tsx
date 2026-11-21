@@ -8,7 +8,14 @@ import {
   useNavigate,
   useNavigationType,
 } from "react-router-dom";
-import { LogOut, ChevronDown } from "lucide-react";
+import {
+  LogOut,
+  ChevronDown,
+  MapPinned,
+  MessageCircleQuestion,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { ROUTES, route } from "@/shared/constants/routes";
 import {
@@ -21,6 +28,15 @@ import { Badge } from "@/shared/ui/badge";
 import { Avatar } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/shared/ui/dialog";
+import { AI_CHAT_OPEN_EVENT } from "@/shared/constants/events";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { Footer } from "@/shared/layout/footer";
@@ -220,10 +236,109 @@ function RailItems(): (RailItem & { active: boolean })[] {
   }));
 }
 
+const RAIL_TAB =
+  "group relative flex h-11 w-11 items-center justify-center rounded-lg transition-colors text-ink-2 hover:bg-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plate";
+const RAIL_TAB_ACTIVE = "bg-plate-tint text-plate font-medium";
+const RAIL_HINT =
+  "pointer-events-none absolute left-full z-50 ml-2 hidden whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 lg:block";
+
+const AI_ENTRIES = [
+  {
+    to: ROUTES.AI_ROOMMATES,
+    label: "Bạn cùng phòng",
+    hint: "Ghép người ở chung hợp nếp sống",
+    icon: Users,
+  },
+  {
+    to: ROUTES.AI_AREA_SUGGESTIONS,
+    label: "Khu vực phù hợp",
+    hint: "Phường hợp ngân sách và gần trường",
+    icon: MapPinned,
+  },
+] as const;
+
+/**
+ * AI features for students (and guests, who meet the login gate). On a phone the header has
+ * no "Gợi ý AI" menu, so this tab is the way in: a sheet that slides up from the tab bar.
+ */
+function AiRailTab() {
+  const [open, setOpen] = React.useState(false);
+  const { pathname } = useLocation();
+  const active = pathname.startsWith("/ai/");
+  // The floating chat is not mounted on the messages pages, so offer it only where it exists.
+  const chatAvailable = !pathname.startsWith(ROUTES.MESSAGES);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          aria-label="Gợi ý AI"
+          data-active={active ? "true" : "false"}
+          className={cn(RAIL_TAB, active && RAIL_TAB_ACTIVE)}
+        >
+          <Sparkles className="size-5" aria-hidden />
+          <span aria-hidden className={RAIL_HINT}>
+            Gợi ý AI
+          </span>
+        </button>
+      </DialogTrigger>
+      <DialogContent
+        className={cn(
+          "max-lg:bottom-0 max-lg:top-auto max-lg:max-w-none max-lg:w-full max-lg:-translate-y-0",
+          "max-lg:rounded-b-none max-lg:pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
+        )}
+      >
+        <DialogHeader>
+          <DialogTitle>Gợi ý AI</DialogTitle>
+          <DialogDescription>Trợ lý AI giúp bạn chọn chỗ ở và người ở cùng.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-1">
+          {AI_ENTRIES.map((entry) => (
+            <Link
+              key={entry.to}
+              to={entry.to}
+              onClick={() => {
+                setOpen(false);
+              }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-tint"
+            >
+              <entry.icon className="size-5 text-plate" aria-hidden />
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold text-ink">{entry.label}</span>
+                <span className="text-xs text-muted">{entry.hint}</span>
+              </span>
+            </Link>
+          ))}
+          {chatAvailable ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event(AI_CHAT_OPEN_EVENT));
+              }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-left hover:bg-tint"
+            >
+              <MessageCircleQuestion className="size-5 text-plate" aria-hidden />
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold text-ink">Trợ lý chat AI</span>
+                <span className="text-xs text-muted">Hỏi về giá thuê, tiền cọc, hợp đồng</span>
+              </span>
+            </button>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Rail() {
   const items = RailItems();
   const location = useLocation();
+  const { user } = useAuth();
   const isConversationThread = /^\/messages\/\d+/.test(location.pathname);
+  // Landlords' AI help lives in their listing form; the AI pages are for students.
+  const showAi = user?.role !== "landlord";
 
   return (
     <>
@@ -237,34 +352,30 @@ function Rail() {
           isConversationThread && "hidden lg:flex",
         )}
       >
-        {items.map((item) => (
-          <Link
-            key={item.label}
-            to={item.to}
-            aria-label={item.label}
-            aria-current={item.active ? "page" : undefined}
-            className={cn(
-              "group relative flex h-11 w-11 items-center justify-center rounded-lg transition-colors",
-              "text-ink-2 hover:bg-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plate",
-              item.active && "bg-plate-tint text-plate font-medium",
-            )}
-          >
-            <item.icon className="size-5" />
-            {item.badge != null && item.badge > 0 ? (
-              <Badge
-                className={cn("absolute -right-1 -top-1", item.active && "bg-plate text-white")}
-              >
-                {item.badge > 99 ? "99+" : item.badge}
-              </Badge>
-            ) : null}
-            {/* Desktop-only hint, pure CSS (the link already has aria-label). */}
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-full z-50 ml-2 hidden whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 lg:block"
+        {items.map((item, i) => (
+          <React.Fragment key={item.label}>
+            {/* AI sits before Tin nhắn: Tìm phòng, Yêu thích, AI, Tin nhắn. */}
+            {showAi && i === items.length - 1 ? <AiRailTab /> : null}
+            <Link
+              to={item.to}
+              aria-label={item.label}
+              aria-current={item.active ? "page" : undefined}
+              className={cn(RAIL_TAB, item.active && RAIL_TAB_ACTIVE)}
             >
-              {item.label}
-            </span>
-          </Link>
+              <item.icon className="size-5" />
+              {item.badge != null && item.badge > 0 ? (
+                <Badge
+                  className={cn("absolute -right-1 -top-1", item.active && "bg-plate text-white")}
+                >
+                  {item.badge > 99 ? "99+" : item.badge}
+                </Badge>
+              ) : null}
+              {/* Desktop-only hint, pure CSS (the link already has aria-label). */}
+              <span aria-hidden className={RAIL_HINT}>
+                {item.label}
+              </span>
+            </Link>
+          </React.Fragment>
         ))}
       </nav>
     </>
