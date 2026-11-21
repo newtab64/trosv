@@ -30,10 +30,10 @@ class SeedAndRelationsTest extends TestCase
         $this->assertDatabaseCount('reviews', 4);
 
         // Demo accounts exist with the shared password.
-        $student = User::where('email', 'student1@example.com')->first();
-        $landlord = User::where('email', 'landlord1@example.com')->first();
-        $this->assertNotNull($student, 'student1@example.com must exist');
-        $this->assertNotNull($landlord, 'landlord1@example.com must exist');
+        $student = User::where('email', 'student1@email.com')->first();
+        $landlord = User::where('email', 'landlord1@email.com')->first();
+        $this->assertNotNull($student, 'student1@email.com must exist');
+        $this->assertNotNull($landlord, 'landlord1@email.com must exist');
         $this->assertTrue(Hash::check('password', $student->password));
         $this->assertTrue(Hash::check('password', $landlord->password));
 

@@ -284,7 +284,7 @@ Dữ liệu trải khắp Việt Nam, nhóm theo 34 đơn vị hành chính cấ
 | wards | 185 phường/xã thuộc 12 thành phố nhiều sinh viên; riêng TP.HCM đủ 168 đơn vị sau sáp nhập (mỗi ward có `city_id`) |
 | schools | 32 trường ĐH thuộc 10 thành phố, riêng TP.HCM đủ 20 trường, mỗi trường gán 1 phường/xa (`city_id` + `ward_id`) |
 | amenities | Wi-Fi, Máy lạnh, Máy nước nóng, Máy giặt, Tủ lạnh, Bếp, WC riêng, Chỗ để xe, Bảo vệ, Giờ giấc tự do |
-| users | 3 chủ nhà, 10 sinh viên (hồ sơ điền đủ, phần lớn `looking_for_roommate = true`). Mật khẩu chung `password`. Email theo mẫu `student1@example.com`, `landlord1@example.com` |
+| users | 3 chủ nhà, 10 sinh viên (hồ sơ điền đủ, phần lớn `looking_for_roommate = true`). Mật khẩu chung `password`. Email theo mẫu `student1@email.com`, `landlord1@email.com` |
 | listings | 30 tin, đủ 3 loại, giá 1,5 đến 6 triệu, tọa độ quanh tâm khu vực, 3 đến 6 tiện ích mỗi tin, mỗi tin 1 ảnh mẫu lưu cục bộ, vài tin `rented` |
 | khác | Vài hội thoại có tin nhắn, vài đánh giá |
 

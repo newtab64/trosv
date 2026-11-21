@@ -32,8 +32,8 @@ docker compose up -d --build
 - Web: http://localhost:3000 · API: http://localhost:3000/api
 - Dữ liệu demo: `SEED_ON_BOOT=1` trong `.env` (đặt trước khi boot), hoặc
   `docker compose exec backend php artisan migrate:fresh --seed --force`
-- Tài khoản demo (mật khẩu `password`): `student1@example.com` (sinh
-  viên), `landlord1@example.com` (chủ nhà)
+- Tài khoản demo (mật khẩu `password`): `student1@email.com` (sinh
+  viên), `landlord1@email.com` (chủ nhà)
 - AI service là stub FAKE_MODE, không bắt buộc: `docker compose --profile
   ai up -d`. AI tắt thì backend tự trả 503, mọi tính năng còn lại chạy bình thường.
 

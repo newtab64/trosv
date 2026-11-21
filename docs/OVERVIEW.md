@@ -42,8 +42,8 @@ It runs in `FAKE_MODE` by default (rule-based, no API key). The root `.env` need
 `APP_KEY` and the `REVERB_*` values (see `.env.example`); `SEED_ON_BOOT=1` loads
 demo data.
 
-Demo accounts, password `password`: `student1`…`student10@example.com` and
-`landlord1`…`landlord3@example.com`. Useful make targets: `test-api`, `lint-api`,
+Demo accounts, password `password`: `student1`…`student10@email.com` and
+`landlord1`…`landlord3@email.com`. Useful make targets: `test-api`, `lint-api`,
 `lint-web`, `build-web`, `check`, `smoke`, `backup`.
 
 ## 3. Backend (`apps/api`)
