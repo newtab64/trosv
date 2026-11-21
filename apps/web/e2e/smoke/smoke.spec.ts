@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Seeded demo account (infra/deploy/deploy.sh seed output). Kept in sync with the docs.
-const STUDENT = { email: "student1@trosv.vn", password: "password" };
+const STUDENT = { email: "student1@email.com", password: "password" };
 
 test.describe("smoke", () => {
   test("guests can browse the home feed without logging in", async ({ page }) => {

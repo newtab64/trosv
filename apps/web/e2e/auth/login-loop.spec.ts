@@ -59,7 +59,7 @@ test.describe("stale credentials on /login", () => {
     });
 
     await page.goto("/login");
-    await page.locator("#login-email").fill("student1@trosv.vn");
+    await page.locator("#login-email").fill("student1@email.com");
     await page.locator("#login-password").fill("password");
     await page.getByRole("button", { name: "Đăng nhập" }).click();
 
@@ -68,6 +68,6 @@ test.describe("stale credentials on /login", () => {
       timeout: 10_000,
     });
     const stored = await page.evaluate(() => localStorage.getItem("user"));
-    expect(stored && (JSON.parse(stored) as { email?: string }).email).toBe("student1@trosv.vn");
+    expect(stored && (JSON.parse(stored) as { email?: string }).email).toBe("student1@email.com");
   });
 });

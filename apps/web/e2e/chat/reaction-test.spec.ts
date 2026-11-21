@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("reaction badge and preview card reaction", async ({ page }) => {
   // 1. Go to login
   await page.goto("/login");
-  await page.fill('input[type="email"]', "student1@trosv.vn");
+  await page.fill('input[type="email"]', "student1@email.com");
   await page.fill('input[type="password"]', "password");
   await page.click('button[type="submit"]');
 
