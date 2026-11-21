@@ -45,7 +45,7 @@ async function focusIndicatorColor(target: ReturnType<Page["locator"]>): Promise
 test.describe("review fixes", () => {
   test("room lightbox covers the site header", async ({ page }) => {
     await page.setViewportSize({ width: 1360, height: 900 });
-    await page.goto("/rooms/48");
+    await page.goto("/rooms/1"); // exists in every seed (old 48 rooms, new 22)
     await page.getByRole("button", { name: "Xem ảnh lớn" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();

@@ -76,3 +76,6 @@ playwright-report/
 
 # superpowers brainstorm/ledger scratch
 .superpowers/
+
+# Local report drafts and build tooling (contain personal details) - never committed.
+/files/

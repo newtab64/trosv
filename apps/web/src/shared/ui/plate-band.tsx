@@ -99,11 +99,16 @@ export function PlateBand({
       data-testid="plate-band"
       data-size="hero"
       className={cn(
-        "relative z-10 flex items-center overflow-hidden bg-band text-white shadow-seam md:min-h-[420px]",
+        "relative z-10 flex items-center bg-band text-white shadow-seam md:min-h-[420px]",
         className,
       )}
     >
-      {backdrop}
+      {/* Clip only the artwork: clipping the section also cut off popovers such as the search suggestions. */}
+      {backdrop ? (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          {backdrop}
+        </div>
+      ) : null}
       <div
         className={cn(
           "relative mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 md:gap-6 md:px-8 md:py-12",

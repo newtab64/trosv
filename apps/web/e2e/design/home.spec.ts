@@ -185,3 +185,28 @@ test.describe("home on a phone", () => {
     expect(card!.y).toBeLessThan(900);
   });
 });
+
+test.describe("hero search suggestions", () => {
+  test.use({ viewport: { width: 1366, height: 768 } });
+
+  test("are not clipped by the hero band", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("searchbox", { name: "Tìm phòng" }).fill("ĐH");
+    const links = page.locator('form a[href^="/rooms?"]');
+    await expect(links.first()).toBeVisible();
+    // Every suggestion must be the element painted at its own centre (nothing clips it).
+    // No scrollIntoView: it would scroll the clipping box itself and hide the bug.
+    const hidden = await links.evaluateAll(
+      (els) =>
+        els.filter((el) => {
+          const r = el.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            r.x + Math.min(20, r.width / 2),
+            r.y + r.height / 2,
+          );
+          return !(hit && el.contains(hit));
+        }).length,
+    );
+    expect(hidden).toBe(0);
+  });
+});
