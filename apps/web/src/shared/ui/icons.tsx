@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 export {
   HousePlaceholder,
-  FavoriteEmptyIllustration,
   SearchEmptyIllustration,
   AiUnavailableIllustration,
   NotFoundIllustration,
