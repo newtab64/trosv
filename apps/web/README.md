@@ -17,8 +17,8 @@ http://localhost:3000 và API same-origin `/api`.
 
 ## Tài khoản demo (mật khẩu `password`)
 
-- `student1@example.com` … `student10@example.com` - sinh viên
-- `landlord1@example.com` … `landlord3@example.com` - chủ nhà
+- `student1@trosv.vn` … `student10@trosv.vn` - sinh viên
+- `landlord1@trosv.vn` … `landlord3@trosv.vn` - chủ nhà
 
 ## Trang
 

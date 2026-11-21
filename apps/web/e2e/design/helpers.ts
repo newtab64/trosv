@@ -2,8 +2,8 @@ import type { Page } from "@playwright/test";
 
 const API = "http://localhost:8000/api";
 
-export const STUDENT = "student1@example.com";
-export const LANDLORD = "landlord1@example.com";
+export const STUDENT = "student1@trosv.vn";
+export const LANDLORD = "landlord1@trosv.vn";
 
 interface LoginData {
   token: string;

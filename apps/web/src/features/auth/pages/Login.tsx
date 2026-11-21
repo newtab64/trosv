@@ -106,10 +106,6 @@ export default function Login() {
           </Link>
         </p>
       </form>
-
-      <p className="mt-6 rounded-xl border border-line bg-tint p-3 text-center text-xs text-muted">
-        Tài khoản dùng thử: student1@example.com hoặc landlord1@example.com, mật khẩu password
-      </p>
     </AuthSplit>
   );
 }
