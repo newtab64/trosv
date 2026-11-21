@@ -49,8 +49,8 @@ docker compose up -d --build
 
 Mật khẩu mặc định cho tất cả tài khoản: `password`
 
-- **Sinh viên**: `student1@trosv.vn`
-- **Chủ nhà**: `landlord1@trosv.vn`
+- **Sinh viên**: `student1@email.com`
+- **Chủ nhà**: `landlord1@email.com`
 
 ---
 

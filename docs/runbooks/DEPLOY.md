@@ -105,7 +105,7 @@ curl -s -o /dev/null -w 'frontend: %{http_code}\n' "https://$DOMAIN/"
 curl -s  "https://$DOMAIN/api/cities" | head -c 120; echo
 ```
 
-Bằng browser: mở `https://$DOMAIN`, đăng nhập `student1@trosv.vn` /
+Bằng browser: mở `https://$DOMAIN`, đăng nhập `student1@email.com` /
 `password` (khi `SEED_ON_BOOT=1`). Thử chat realtime: mở thêm 1 cửa sổ
 ẩn danh, đăng nhập bằng chủ nhà, nhắn tin từ trang phòng - badge chưa đọc
 tăng ngay = WebSocket (`wss://$DOMAIN/app/*`) chạy đúng.

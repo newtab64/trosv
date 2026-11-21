@@ -16,8 +16,8 @@
 #                         /tmp/trosv-demo.pids
 #
 # Demo accounts (sau khi seed, SEED_ON_BOOT=1 trong .env khi docker):
-#   student1@trosv.vn  /  password   (sinh vien)
-#   landlord1@trosv.vn /  password   (chu nha)
+#   student1@email.com  /  password   (sinh vien)
+#   landlord1@email.com /  password   (chu nha)
 #
 # AI service (:8001, docker compose --profile ai) khong bat buoc -
 # backend tu tra 503 fallback khi AI chet, e2e smoke van xanh.
@@ -234,8 +234,8 @@ echo "  API : http://localhost:8000/api"
 echo "  WS  : ws://localhost:8080 (Reverb)"
 echo ""
 echo "  Tai khoan demo (mat khau: password)"
-echo "    Sinh vien : student1@trosv.vn"
-echo "    Chu nha   : landlord1@trosv.vn"
+echo "    Sinh vien : student1@email.com"
+echo "    Chu nha   : landlord1@email.com"
 echo ""
 echo "  Log   : $API_LOG | $WEB_LOG"
 echo "  Stop  : bash infra/deploy/deploy.sh --stop"

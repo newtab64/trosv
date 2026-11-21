@@ -118,9 +118,9 @@ R=$(NOGET "$API/listings/999999"); DBG "$R"
 check "missing listing -> 404 json" "$(JQ "$R" '.message')" "Không tìm thấy dữ liệu."
 
 echo "=== AUTH: bad login then real login (Login page) ==="
-R=$(NOPOST "$API/login" '{"email":"student1@trosv.vn","password":"wrong"}'); DBG "$R"
+R=$(NOPOST "$API/login" '{"email":"student1@email.com","password":"wrong"}'); DBG "$R"
 check "bad login 422 + errors.email" "$(JQ "$R" '.errors.email[0] != null')" "true"
-R=$(NOPOST "$API/login" '{"email":"student1@trosv.vn","password":"password"}'); DBG "$R"
+R=$(NOPOST "$API/login" '{"email":"student1@email.com","password":"password"}'); DBG "$R"
 STOKEN=$(JQ "$R" '.data.token')
 if [[ ${#STOKEN} -lt 20 ]]; then
   echo "✗ student1 login failed - is the DB seeded? (php artisan migrate:fresh --seed)"
@@ -159,7 +159,7 @@ check "favorites page +1" "$(JQ "$R" '.data|length')" "$((BASE_FAV+1))"
 
 echo "=== STUDENT: Messaging (chat button + Messages pages) ==="
 # Conversation step: pick a listing belonging to landlord1 (instead of sort=newest) so landlord1 owns it
-LTOKEN=$(JQ "$(NOPOST "$API/login" '{"email":"landlord1@trosv.vn","password":"password"}')" '.data.token')
+LTOKEN=$(JQ "$(NOPOST "$API/login" '{"email":"landlord1@email.com","password":"password"}')" '.data.token')
 LID=$(JQ "$(GET "$LTOKEN" "$API/my/listings")" '.data[0].id')
 R=$(POST "$TTOKEN" "$API/conversations" "{\"listing_id\":$LID}"); DBG "$R"
 CONV=$(JQ "$R" '.data.id')
@@ -168,7 +168,7 @@ R=$(POST "$TTOKEN" "$API/conversations" "{\"listing_id\":$LID}"); DBG "$R"
 check "get-or-create same id" "$(JQ "$R" '.data.id')" "$CONV"
 
 # Direct student-to-student conversation (from public profile, no listing).
-S2ID=$(JQ "$(NOPOST "$API/login" '{"email":"student2@trosv.vn","password":"password"}')" '.data.user.id')
+S2ID=$(JQ "$(NOPOST "$API/login" '{"email":"student2@email.com","password":"password"}')" '.data.user.id')
 R=$(POST "$TTOKEN" "$API/users/$S2ID/message" '{}'); DBG "$R"
 check "direct conversation get-or-create" "$(JQ "$R" '.data.listing == null and .data.other_user.id != null')" "true"
 R=$(POST "$TTOKEN" "$API/conversations/$CONV/messages" '{"body":"Phòng còn không ạ?"}'); DBG "$R"
@@ -183,7 +183,7 @@ check "attachment signed url 200" "$(curl -s -o /dev/null -w '%{http_code}' "$AU
 R=$(GET "$TTOKEN" "$API/conversations/$CONV/messages?after_id=$MSG1"); DBG "$R"
 check "after_id returns newer msg" "$(JQ "$R" '.data[0].attachment_name')" "e2e.pdf"
 
-R=$(NOPOST "$API/login" '{"email":"landlord1@trosv.vn","password":"password"}'); DBG "$R"
+R=$(NOPOST "$API/login" '{"email":"landlord1@email.com","password":"password"}'); DBG "$R"
 LTOKEN=$(JQ "$R" '.data.token')
 R=$(GET "$LTOKEN" "$API/conversations"); DBG "$R"
 check "landlord sees conv unread>0" "$(JQ "$R" "[.data[]|select(.id==$CONV)][0].unread_count > 0")" "true"
@@ -216,7 +216,7 @@ check_ai "ai/roommates" "$R"
 MYID=$(JQ "$(GET "$TTOKEN" "$API/me")" '.data.id')
 R=$(NOGET "$API/users/$MYID"); DBG "$R"
 check "public student profile no email/phone" "$(JQ "$R" '(.data.email == null) and (.data.phone == null) and (.data.interests|type == "array")')" "true"
-LANDLORD_ID=$(JQ "$(NOPOST "$API/login" '{"email":"landlord1@trosv.vn","password":"password"}')" '.data.user.id')
+LANDLORD_ID=$(JQ "$(NOPOST "$API/login" '{"email":"landlord1@email.com","password":"password"}')" '.data.user.id')
 R=$(NOGET "$API/users/$LANDLORD_ID"); DBG "$R"
 check "landlord public profile -> 404" "$(JQ "$R" '.message != null')" "true"
 R=$(POST "$TTOKEN" "$API/ai/area-suggestions" '{}'); DBG "$R"
