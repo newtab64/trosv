@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
         foreach ($landlordNames as $i => $name) {
             User::forceCreate([
                 'name' => $name,
-                'email' => 'landlord'.($i + 1).'@example.com',
+                'email' => 'landlord'.($i + 1).'@trosv.vn',
                 'password' => $password,
                 'role' => User::ROLE_LANDLORD,
                 'phone' => '090'.str_pad((string) ($i + 1), 7, '0', STR_PAD_LEFT),
@@ -46,7 +46,7 @@ class UserSeeder extends Seeder
 
             User::forceCreate([
                 'name' => $studentNames[$i - 1],
-                'email' => "student{$i}@example.com",
+                'email' => "student{$i}@trosv.vn",
                 'password' => $password,
                 'role' => User::ROLE_STUDENT,
                 'phone' => '093'.str_pad((string) $i, 7, '0', STR_PAD_LEFT),

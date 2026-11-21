@@ -34,7 +34,7 @@ Backend xây dựng, Frontend sử dụng. Nếu cần thay đổi, hãy sửa f
 | `personality` | `introvert` (hướng nội), `ambivert` (trung tính), `extrovert` (hướng ngoại) |
 | `priorities` | `cheap` (giá rẻ), `near_school` (gần trường), `well_rated` (đánh giá tốt), `many_options` (nhiều lựa chọn) |
 
-Tài khoản mẫu (mật khẩu `password`): từ `student1@example.com` đến `student10@example.com`, từ `landlord1@example.com` đến `landlord3@example.com`.
+Tài khoản mẫu (mật khẩu `password`): từ `student1@trosv.vn` đến `student10@trosv.vn`, từ `landlord1@trosv.vn` đến `landlord3@trosv.vn`.
 
 ## 3. Các đối tượng dữ liệu
 

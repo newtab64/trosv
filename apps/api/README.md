@@ -37,8 +37,8 @@ vendor/bin/pint --test app tests    # check style
 ```
 
 Tài khoản demo (mật khẩu `password`):
-- Sinh viên: `student1@example.com` … `student10@example.com`
-- Chủ nhà: `landlord1@example.com` … `landlord3@example.com`
+- Sinh viên: `student1@trosv.vn` … `student10@trosv.vn`
+- Chủ nhà: `landlord1@trosv.vn` … `landlord3@trosv.vn`
 
 ## Cấu trúc chính
 
