@@ -1,5 +1,5 @@
 /* TROSV map pins: white pills, 1px ink border, small tail, tabular numbers.
-   Hover and selected turn plate. Clusters are ink circles with paper numbers. */
+   Hover and selected turn plate. Clusters are red location pins with the count. */
 
 .trosv-pin-wrap {
   background: transparent !important;
@@ -7,37 +7,51 @@
 }
 
 .trosv-pin {
+  /* Icon box is 0x0 on the point: centre the pill and lift it by the tail (7px) so the tail tip is the point. */
+  position: absolute;
+  left: 0;
+  bottom: 7px;
+  transform: translateX(-50%);
   display: inline-block;
   min-width: 40px;
-  padding: 4px 10px 6px;
+  padding: 4px 10px 5px;
   border: 1px solid var(--color-ink);
   border-radius: 8px;
   background: #fff;
   color: var(--color-ink);
   font: 600 13px var(--font-sans);
   font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  white-space: nowrap;
   text-align: center;
   cursor: pointer;
   user-select: none;
-  position: relative;
   transition:
     background-color 150ms ease-out,
     border-color 150ms ease-out;
 }
 
-/* Small tail below the pill */
-.trosv-pin::after {
-  content: "";
+/* Tail: a 7px triangle under the pill (border outline + fill), tip exactly at its bottom. */
+.trosv-pin-tail {
   position: absolute;
   left: 50%;
-  bottom: -5px;
-  margin-left: -4px;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-  border-right: 1px solid var(--color-ink);
-  border-bottom: 1px solid var(--color-ink);
-  transform: rotate(45deg);
+  top: 100%;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid var(--color-ink);
+}
+
+.trosv-pin-tail::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -8px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #fff;
 }
 
 .trosv-pin:hover,
@@ -47,10 +61,14 @@
   color: #fff;
 }
 
-.trosv-pin:hover::after,
-.trosv-pin--selected::after {
-  background: var(--color-plate);
-  border-color: var(--color-plate);
+.trosv-pin:hover .trosv-pin-tail,
+.trosv-pin--selected .trosv-pin-tail {
+  border-top-color: var(--color-plate);
+}
+
+.trosv-pin:hover .trosv-pin-tail::after,
+.trosv-pin--selected .trosv-pin-tail::after {
+  border-top-color: var(--color-plate);
 }
 
 .trosv-pin:focus-visible {
@@ -58,24 +76,33 @@
   outline-offset: 2px;
 }
 
-/* Cluster: ink circle with paper number */
+/* Cluster: red location pin (Google Maps style), count in the round head. */
 .trosv-cluster-wrap {
   background: transparent !important;
   border: 0 !important;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.35));
+}
+
+/* leaflet.css gives every map svg z-index 200; keep the pin under its count. */
+.leaflet-marker-icon.trosv-cluster-wrap svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .trosv-cluster {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 5px;
+  width: 34px;
+  height: 23px;
   display: flex;
-  width: 40px;
-  height: 40px;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: var(--color-ink);
-  color: var(--color-paper);
-  font: 600 13px var(--font-sans);
+  color: #fff;
+  font: 700 12px var(--font-sans);
   font-variant-numeric: tabular-nums;
-  box-shadow: none;
 }
 
 /* Attribution small and muted */
