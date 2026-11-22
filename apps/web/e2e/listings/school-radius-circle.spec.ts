@@ -42,7 +42,10 @@ test.describe("school radius on the map", () => {
 
     // Change the radius in the "Gần trường" filter: the circle follows.
     await page.getByRole("button", { name: /^Gần trường$/ }).click();
-    await page.locator("#filter-radius").selectOption("1");
+    await page
+      .getByRole("group", { name: "Bán kính" })
+      .getByRole("button", { name: "1 km" })
+      .click();
     await expect(map(page)).toHaveAttribute("data-school-radius-km", "1");
     const one = await geometry(page);
     expect(one!.radiusKm).toBe(1);

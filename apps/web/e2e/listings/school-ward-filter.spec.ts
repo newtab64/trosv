@@ -1,117 +1,61 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Regression guard: cascade chiều dương trên /rooms - phuong TRUOC, truong
- * SAU. Danh sách "Gần trường" chỉ hiện trường thuộc phường đã chọn ở
- * "Bộ lọc" (school.ward.id từ API); đổi phường thì GIỮ trường + bán kính.
- *
- * Assert phần lọc ở LỚP API (response /listings) - không assert theo text
- * card vì seeder bóc tên phường vào title, text-assert sẽ pass ảo.
+ * "Gần trường" is a type-to-search school picker: no city or ward first.
+ * The ward filter in "Bộ lọc" stays independent: changing it keeps the
+ * school and radius (asserted on the /listings request, not card text).
  */
-test.describe("rooms ward -> school cascade", () => {
-  test("school list narrows to the chosen ward and keeps the school on ward change", async ({
-    page,
-  }) => {
+test.describe("near-school picker", () => {
+  test("type a school without picking a city or ward first", async ({ page }) => {
     await page.goto("/rooms");
-
-    // City + ward cascade lives in the "Bộ lọc" pill popover.
-    await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
-    const citySelect = page.locator("#filter-city");
-    const wardSelect = page.locator("#filter-ward");
-
-    // Ward stays disabled until a city is picked (existing cascade).
-    await expect(wardSelect).toBeDisabled();
-    await citySelect.selectOption({ label: "TP.HCM" });
-    await expect(wardSelect).toBeEnabled();
-
-    // Pick a ward with MULTIPLE schools: Phường Linh Trung hosts
-    // HCMIU, UIT and NLU (3 schools share the campus ward).
-    await wardSelect.selectOption({ label: "Phường Linh Trung" });
-    await page.keyboard.press("Escape");
-
-    // The "Gần trường" pill narrows schools to exactly that ward.
     await page.getByRole("button", { name: "Gần trường", exact: true }).click();
-    const schoolSelect = page.locator("#filter-school");
-    await expect(schoolSelect.locator("option")).toHaveCount(4); // placeholder + 3
-    for (const name of ["HCMIU", "UIT", "NLU"]) {
-      await expect(schoolSelect.locator(`option:has-text("${name}")`)).toHaveCount(1);
-    }
-    await expect(schoolSelect.locator('option:has-text("HCMUT")')).toHaveCount(0); // khác phường -> biến mất
 
-    // Placeholder mirrors the cascade state (React controlled select:
-    // assert qua value + text, khong qua attribute [selected]).
-    await expect(schoolSelect).toHaveValue("");
-    await expect(schoolSelect).toContainText("Chọn trường trong phường này");
+    // No city / ward selects in this pill any more.
+    await expect(page.locator("#near-school-city")).toHaveCount(0);
+    await expect(page.locator("#near-school-ward")).toHaveCount(0);
 
-    // Choosing a school in that ward refetches with school_id set (the
-    // hook keeps ward_id too); every returned listing belongs to the
-    // school's ward.
-    const listingsWithWard = page.waitForResponse(
+    // Accent-free typing narrows the list to the Bách Khoa schools only.
+    await page.getByRole("button", { name: /Tìm theo tên trường/ }).click();
+    await page.getByPlaceholder(/Gõ tên trường/).fill("bach khoa");
+    const options = page.getByRole("button", { name: /Bách [Kk]hoa/ });
+    await expect(options.first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /\(UEH\)/ })).toHaveCount(0);
+
+    const picked = page.waitForResponse(
       (r) => r.url().includes("/listings") && r.url().includes("school_id="),
     );
-    const uitVal = await schoolSelect.locator('option:has-text("UIT")').getAttribute("value");
-    await schoolSelect.selectOption(uitVal);
-    const res = await listingsWithWard;
-    const url = new URL(res.url());
-    expect(url.searchParams.get("school_id")).toBeTruthy();
-    const body = (await res.json()) as {
-      data: Array<{ ward: { id: number; name: string } }>;
-    };
-    const wardId = url.searchParams.get("ward_id");
-    for (const listing of body.data) {
-      expect(String(listing.ward.id)).toBe(wardId);
-    }
+    await page.getByRole("button", { name: /\(DUT\)/ }).click();
+    const url = new URL((await picked).url());
+    expect(url.searchParams.get("max_km")).toBe("3");
+    expect(url.searchParams.get("sort")).toBe("distance");
 
-    // Radius select appears only after a school is chosen.
-    const radiusSelect = page.locator("#filter-radius");
-    await expect(radiusSelect).toBeVisible();
-    await radiusSelect.selectOption("2");
-    await page.keyboard.press("Escape");
-
-    // Clearing the ward keeps the school and radius so the search can cross
-    // ward lines: the request must not carry ward_id.
-    await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
-    const listingsAcrossWards = page.waitForResponse(
-      (r) => r.url().includes("/listings") && r.url().includes("school_id="),
+    // Radius is a row of buttons; 3 km is on by default.
+    const radius = page.getByRole("group", { name: "Bán kính" });
+    await expect(radius.getByRole("button", { name: "3 km" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
-    await wardSelect.selectOption({ label: "Tất cả phường" });
-    const acrossWards = await listingsAcrossWards;
-    const acrossUrl = new URL(acrossWards.url());
-    expect(acrossUrl.searchParams.get("school_id")).toBeTruthy();
-    expect(acrossUrl.searchParams.get("max_km")).toBe("2");
-    expect(acrossUrl.searchParams.get("ward_id")).toBeNull();
-    await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: "Gần trường", exact: true }).click();
-    expect(uitVal).toBeTruthy();
-    await expect(schoolSelect).toHaveValue(uitVal ?? "");
-    await expect(radiusSelect).toHaveValue("2");
-    await page.keyboard.press("Escape");
-
-    // Changing the ward keeps school + radius, and the selected school stays
-    // in the list even though it belongs to the previous ward.
-    await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
-    const listingsWithNewWard = page.waitForResponse(
-      (r) => r.url().includes("/listings") && r.url().includes("school_id="),
+    const wider = page.waitForResponse(
+      (r) => r.url().includes("/listings") && r.url().includes("max_km=5"),
     );
-    await wardSelect.selectOption({ label: "Phường Chợ Quán" });
-    const newWard = await listingsWithNewWard;
-    const newWardUrl = new URL(newWard.url());
-    expect(newWardUrl.searchParams.get("school_id")).toBeTruthy();
-    expect(newWardUrl.searchParams.get("max_km")).toBe("2");
-    expect(newWardUrl.searchParams.get("ward_id")).toBeTruthy();
-    await page.keyboard.press("Escape");
-    await page.getByRole("button", { name: "Gần trường", exact: true }).click();
-    await expect(schoolSelect).toHaveValue(uitVal ?? "");
-    await expect(radiusSelect).toHaveValue("2");
-    for (const name of ["HCMUS", "HCMUE", "SGU", "UIT"]) {
-      await expect(schoolSelect.locator(`option:has-text("${name}")`)).toHaveCount(1);
-    }
-    await page.keyboard.press("Escape");
+    await radius.getByRole("button", { name: "5 km" }).click();
+    await wider;
+    await expect(radius.getByRole("button", { name: "5 km" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
 
-    // Reset returns to the pristine cascade (ward disabled again).
+  test("changing the ward keeps the school and radius", async ({ page }) => {
+    // City already chosen (Đà Nẵng = 3); changing the city would reset the school by design.
+    await page.goto("/rooms?city_id=3&school_id=41&max_km=2&sort=distance");
     await page.getByRole("button", { name: "Bộ lọc", exact: true }).click();
-    await page.getByRole("button", { name: "Đặt lại" }).click();
-    await expect(wardSelect).toBeDisabled();
-    await expect(wardSelect).toContainText("Chọn Tỉnh/TP trước");
+    const withWard = page.waitForResponse(
+      (r) => r.url().includes("/listings") && r.url().includes("ward_id="),
+    );
+    await page.locator("#filter-ward").selectOption({ index: 1 });
+    const url = new URL((await withWard).url());
+    expect(url.searchParams.get("school_id")).toBe("41");
+    expect(url.searchParams.get("max_km")).toBe("2");
   });
 });

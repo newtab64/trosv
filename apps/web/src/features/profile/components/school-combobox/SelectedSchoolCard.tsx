@@ -24,7 +24,7 @@ export function SelectedSchoolCard({
           <GraduationCap className="size-5" aria-hidden />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink">{school.name}</p>
+          <p className="text-sm font-semibold text-ink break-words">{school.name}</p>
           <p className="text-xs text-muted">{schoolPlace(school, "Đại học / Cao đẳng")}</p>
         </div>
       </div>
