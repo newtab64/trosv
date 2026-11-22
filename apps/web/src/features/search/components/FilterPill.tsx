@@ -7,10 +7,18 @@ export interface FilterPillProps {
   active: boolean;
   onClear: () => void;
   children: ReactNode;
+  /** Popover width etc., for content wider than the default w-72. */
+  contentClassName?: string;
 }
 
 /** A pill in the filter strip that opens a popover; yellow while its filter is active. */
-export function FilterPill({ label, active, onClear, children }: FilterPillProps) {
+export function FilterPill({
+  label,
+  active,
+  onClear,
+  children,
+  contentClassName,
+}: FilterPillProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -28,7 +36,7 @@ export function FilterPill({ label, active, onClear, children }: FilterPillProps
           {label}
         </button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent collisionPadding={16} className={contentClassName}>
         {children}
         {active ? (
           <button

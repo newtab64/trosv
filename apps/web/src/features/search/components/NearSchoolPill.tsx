@@ -1,21 +1,23 @@
+import { SchoolCombobox } from "@/features/profile/components/SchoolCombobox";
+import { cn } from "@/shared/lib/utils";
 import { FilterPill } from "./FilterPill";
-import { LocationSelects, SELECT_FIELD_CLASS } from "./LocationSelects";
-import { schoolPlaceholder, schoolsFor } from "../lib/locationOptions";
 import type { SearchState } from "../lib/types";
 
-export const RADIUS_OPTIONS = [
-  { value: "1", label: "Trong 1 km" },
-  { value: "2", label: "Trong 2 km" },
-  { value: "3", label: "Trong 3 km" },
-  { value: "5", label: "Trong 5 km" },
+/** "" = no radius: every room, sorted by distance to the school. */
+const RADIUS_OPTIONS = [
+  { value: "1", label: "1 km" },
+  { value: "2", label: "2 km" },
+  { value: "3", label: "3 km" },
+  { value: "5", label: "5 km" },
+  { value: "", label: "Mọi khoảng cách" },
 ] as const;
 
-const LABEL_CLASS = "flex flex-col gap-1 text-xs font-medium text-ink-2";
+const LABEL_CLASS = "text-xs font-medium text-ink-2";
+const CHIP = "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors";
 
-/** "Gần trường": city, ward, then the schools in that ward, then a radius. */
+/** "Gần trường": type to find a school (no city or ward first), then pick a radius. */
 export function NearSchoolPill({ search }: { search: SearchState }) {
-  const { city_id: cityId, ward_id: wardId, school_id: schoolId, max_km: maxKm } = search.filters;
-  const schools = schoolsFor(search.schools, { cityId, wardId }, schoolId);
+  const { school_id: schoolId, max_km: maxKm } = search.filters;
 
   return (
     <FilterPill
@@ -24,51 +26,47 @@ export function NearSchoolPill({ search }: { search: SearchState }) {
       onClear={() => {
         search.setSchool("");
       }}
+      contentClassName="w-[380px] max-w-[calc(100vw-2rem)]"
     >
-      <div className="flex flex-col gap-3 min-w-[250px]">
-        <LocationSelects idPrefix="near-school" search={search} cityAllLabel="Tất cả tỉnh thành" />
-
-        <div>
-          <label htmlFor="filter-school" className={LABEL_CLASS}>
-            Trường đại học
-            <select
-              id="filter-school"
-              value={schoolId}
-              onChange={(e) => {
-                search.setSchool(e.target.value);
-              }}
-              disabled={cityId === ""}
-              className={SELECT_FIELD_CLASS}
-            >
-              <option value="">{schoolPlaceholder(cityId, wardId)}</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <span className={LABEL_CLASS}>Trường</span>
+          <SchoolCombobox
+            schools={search.schools}
+            value={schoolId}
+            onChange={(id) => {
+              search.setSchool(id);
+            }}
+          />
         </div>
 
         {schoolId !== "" ? (
-          <label htmlFor="filter-radius" className={LABEL_CLASS}>
-            Bán kính
-            <select
-              id="filter-radius"
-              value={maxKm}
-              onChange={(e) => {
-                search.setFilter("max_km", e.target.value);
-              }}
-              className={SELECT_FIELD_CLASS}
-            >
-              <option value="">Mọi khoảng cách</option>
-              {RADIUS_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div role="group" aria-label="Bán kính" className="flex flex-col gap-1.5">
+            <span className={LABEL_CLASS}>Bán kính</span>
+            <div className="flex flex-wrap gap-1.5">
+              {RADIUS_OPTIONS.map((r) => {
+                const on = maxKm === r.value;
+                return (
+                  <button
+                    key={r.value || "all"}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => {
+                      search.setFilter("max_km", r.value);
+                    }}
+                    className={cn(
+                      CHIP,
+                      on
+                        ? "border-plate bg-plate text-white"
+                        : "border-line bg-card text-ink hover:bg-tint",
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ) : null}
       </div>
     </FilterPill>
