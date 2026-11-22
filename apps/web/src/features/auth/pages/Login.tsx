@@ -109,5 +109,3 @@ export default function Login() {
     </AuthSplit>
   );
 }
-
-/* Password input with a show/hide toggle. */
