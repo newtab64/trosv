@@ -204,6 +204,12 @@
     outline: 2px solid var(--color-plate);
     outline-offset: 2px;
   }
+
+  /* PasswordInput draws its own show/hide eye; hide Edge's built-in one so there is only one. */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 /*
